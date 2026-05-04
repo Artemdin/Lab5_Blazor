@@ -1,4 +1,4 @@
-﻿using BlazorRace.Models;
+﻿using Lab5_Blazor.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
