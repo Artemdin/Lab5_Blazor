@@ -54,7 +54,7 @@ namespace Lab5_Blazor.Models
         private async Task Breakdown()
         {
             IsBroken = true;
-            await Task.Delay(2000); // Зупинка на 2 секунди
+            await Task.Delay(1000); // Зупинка на 1 секунди
             IsBroken = false;
         }
 
@@ -66,7 +66,7 @@ namespace Lab5_Blazor.Models
         public void GenerateNewStats()
         {
             // Оновлюємо швидкість, щоб кожна гонка була унікальною
-            Speed = _rng.Next(7, 13);
+            Speed = _rng.Next(7, 13); // швидкість від 7 до 13 одиниць
 
             // Генеруємо новий коефіцієнт 
             WinCoefficient = Math.Round(1.5 + _rng.NextDouble() * 2, 2);

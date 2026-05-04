@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lab5_Blazor.Services
 {
-    public enum Weather { Sunny, Rain, Fog }
+    public enum Weather { Sunny, Rain, Snow }
 
     public class RaceEngine
     {
@@ -31,9 +31,9 @@ namespace Lab5_Blazor.Services
 
             double weatherMultiplier = CurrentWeather switch
             {
-                Weather.Rain => 0.4,
-                Weather.Fog => 0.25,
-                _ => 1.0
+                Weather.Rain => 0.5,
+                Weather.Snow => 0.75,
+                _ => 1
             };
             // Створюємо список асинхронних задач
             var tasks = Participants.Select(async v =>

@@ -1,9 +1,9 @@
-﻿/* ─── КОЛЬОРИ ТА БАЗА ─── */
-:root {
+﻿:root {
     --panel-bg: rgba(12, 15, 22, 0.85);
     --panel-border: rgba(255, 255, 255, 0.05);
     --neon-green: #00ff66;
     --neon-red: #ff0055;
+    --dirty-yellow: #d4a017;
     --text-main: #e2e8f0;
     --text-muted: #64748b;
 }
@@ -18,7 +18,6 @@
     z-index: 1;
 }
 
-/* Ефект CRT монітора / Scanlines */
 .scanlines {
     position: fixed;
     top: 0;
@@ -32,7 +31,6 @@
     opacity: 0.4;
 }
 
-/* ─── МАТОВЕ СКЛО (GLASSMORPHISM) ─── */
 .glass-panel {
     background: var(--panel-bg);
     backdrop-filter: blur(16px);
@@ -44,7 +42,6 @@
     z-index: 2;
 }
 
-/* ─── ПАНЕЛЬ КЕРУВАННЯ ─── */
 .control-dashboard {
     display: flex;
     justify-content: space-between;
@@ -118,7 +115,6 @@
         cursor: not-allowed;
     }
 
-/* КНОПКИ */
 .action-buttons {
     display: flex;
     gap: 15px;
@@ -131,7 +127,7 @@
     font-size: 0.9rem;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     border: none;
     text-transform: uppercase;
 }
@@ -148,13 +144,13 @@
     }
 
 .btn-place-bet {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: white;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, var(--dirty-yellow), #8b6508);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.3);
 }
 
     .btn-place-bet:hover:not(:disabled) {
-        box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+        box-shadow: 0 0 30px rgba(212, 160, 23, 0.6);
     }
 
 .btn-solid {
@@ -185,10 +181,10 @@
     background-size: cover;
     background-position: center;
     overflow: hidden;
-    box-shadow: inset 0 0 80px rgba(0, 0, 0, 1); /* Глибокі тіні по краях */
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 1);
 }
 
-/* Ефект руху повітря (швидкісні лінії) */
+/* Швидкість */
 .speed-lines {
     position: absolute;
     top: 0;
@@ -204,7 +200,7 @@
 
     .speed-lines.active {
         opacity: 1;
-        animation: speedPan 0.3s linear infinite;
+        animation: speedPan 0.2s linear infinite;
     }
 
 @keyframes speedPan {
@@ -217,24 +213,104 @@
     }
 }
 
-.neon-line {
+/* 🌧️ ДОЩ 🌧️ */
+.weather-rain {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="0" x2="40" y2="20" stroke="rgba(150,200,255,0.4)" stroke-width="1"/></svg>') repeat;
+    background-size: 25px 40px;
+    animation: fallRain 0.2s linear infinite;
+}
+
+@keyframes fallRain {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: -25px 40px;
+    }
+}
+
+/* ❄️ СНІГ/ХУРТОВИНА ❄️ */
+.weather-snow::before, .weather-snow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.weather-snow::before {
+    background: radial-gradient(3px 3px at 20px 30px, #fff, transparent), radial-gradient(4px 4px at 80px 70px, #fff, transparent), radial-gradient(3px 3px at 50px 10px, #fff, transparent);
+    background-size: 150px 150px;
+    animation: fallSnow 1.5s linear infinite;
+}
+
+.weather-snow::after {
+    background: radial-gradient(2px 2px at 10px 10px, #fff, transparent), radial-gradient(3px 3px at 60px 80px, #fff, transparent);
+    background-size: 100px 100px;
+    filter: blur(1px);
+    animation: fallSnow 1s linear infinite;
+    opacity: 0.7;
+}
+
+@keyframes fallSnow {
+    0% {
+        background-position: 0px 0px;
+    }
+
+    100% {
+        background-position: -50px 150px;
+    }
+}
+
+/* Лінії */
+.start-line {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 4px;
-    z-index: 10;
-}
-
-.start-line {
     left: 0;
-    background: var(--neon-green);
-    box-shadow: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green);
+    width: 4px;
+    z-index: 4;
+    background: rgba(255,255,255,0.3);
+    box-shadow: 0 0 20px rgba(255,255,255,0.5);
+    writing-mode: vertical-rl;
+    text-align: center;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.8);
+    transition: opacity 0.2s linear;
 }
 
-.finish-line {
+.finish-zone {
+    position: absolute;
     right: 0;
-    background: var(--neon-red);
-    box-shadow: 0 0 20px var(--neon-red), 0 0 40px var(--neon-red);
+    top: 0;
+    bottom: 0;
+    width: 250px;
+    z-index: 4;
+    background: linear-gradient(to right, transparent, rgba(0, 255, 102, 0.05) 30%, rgba(0, 255, 102, 0.5) 100%);
+    border-right: 4px solid var(--neon-green);
+    writing-mode: vertical-rl;
+    text-align: center;
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-shadow: 0 0 10px #000;
+    box-shadow: inset -20px 0 40px rgba(0,255,102,0.3);
+    pointer-events: none;
+    transition: opacity 0.2s linear;
 }
 
 .track-lane {
@@ -246,10 +322,9 @@
     border-bottom: 1px dashed rgba(255,255,255,0.05);
 }
 
-/* 🏎️ ЗМЕНШЕНІ АВТО 🏎️ */
 .car-container {
     position: absolute;
-    width: 75px; /* БУЛО 120px - ТЕПЕР МЕНШІ */
+    width: 75px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -288,7 +363,7 @@
     letter-spacing: 1px;
     padding: 2px 6px;
     border-radius: 3px;
-    z-index: 3;
+    z-index: 6;
     box-shadow: 0 0 10px var(--neon-red);
 }
 
@@ -375,7 +450,6 @@
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* Бейджи статусів */
 .status-badge {
     padding: 4px 10px;
     border-radius: 4px;
@@ -421,4 +495,49 @@
     100% {
         opacity: 1;
     }
+}
+
+/* ─── НОВІ СТИЛІ ДЛЯ МІСЦЬ ─── */
+.pos-cell {
+    width: 80px;
+    text-align: center;
+}
+
+.rank-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.rank-gold {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    color: #000;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+.rank-silver {
+    background: linear-gradient(135deg, #e0e0e0, #9e9e9e);
+    color: #000;
+    box-shadow: 0 0 10px rgba(224, 224, 224, 0.3);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+}
+
+.rank-bronze {
+    background: linear-gradient(135deg, #cd7f32, #8b4513);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+}
+
+.rank-none {
+    color: var(--text-muted);
+    background: transparent;
+}
+
+.row-winner td {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), rgba(0,0,0,0.4));
+    border-color: rgba(255, 215, 0, 0.2);
 }

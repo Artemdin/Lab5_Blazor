@@ -7,7 +7,6 @@
 <PageTitle>Redline JDM Racing</PageTitle>
 
 <div class="jdm-race-theme">
-    @* Ефект старого екрану поверх усього *@
     <div class="scanlines"></div>
 
     @* ─── ПАНЕЛЬ КЕРУВАННЯ ТА СТАВОК (HUD) ─── *@
@@ -21,15 +20,15 @@
             <div class="input-wrapper">
                 <span class="input-icon">🌤️</span>
                 <select class="premium-input" @bind="Engine.CurrentWeather" disabled="@Engine.IsRacing">
-                    <option value="@Weather.Sunny">SUNNY (Fast / Low Risk)</option>
-                    <option value="@Weather.Rain">RAIN (Slower / Med Risk)</option>
-                    <option value="@Weather.Fog">FOG (Slow / High Risk)</option>
+                    <option value="@Weather.Sunny">SUNNY (Clear / Fast)</option>
+                    <option value="@Weather.Rain">RAIN (Wet / Medium Risk)</option>
+                    <option value="@Weather.Snow">SNOW STORM (Ice / High Risk)</option>
                 </select>
             </div>
             
             <div class="input-wrapper">
                 <span class="input-icon">💰</span>
-                <input type="number" class="premium-input" @bind="_betAmount" min="50" step="50" disabled="@Engine.IsRacing" placeholder="Bet Amount" />
+                <input type="number" class="premium-input" @bind="_betAmount" min="50" step="50" disabled="@Engine.IsRacing" placeholder="Bet $" />
             </div>
             
             <div class="input-wrapper">
@@ -55,11 +54,41 @@
 
     @* ─── ТРАСА ─── *@
     <div class="track-area glass-panel" style="background-image: url('images/track_bg.png');">
-        @* Анімація швидкості (вмикається під час гонки) *@
+        
+        @* Погодні ефекти *@
+        @if (Engine.CurrentWeather == Weather.Rain)
+        {
+            <div class="weather-rain"></div>
+        }
+        else if (Engine.CurrentWeather == Weather.Snow)
+        {
+            <div class="weather-snow"></div>
+        }
+
         <div class="speed-lines @(Engine.IsRacing ? "active" : "")"></div>
 
-        <div class="neon-line start-line"></div>
-        <div class="neon-line finish-line"></div>
+        @{
+            var leaderPos = Engine.Participants.Any() ? Engine.Participants.Max(v => v.Position) : 0;
+            var leaderPct = Math.Min(100.0, (leaderPos / _trackLen) * 100.0);
+            
+            var startOpacity = Math.Max(0, 1.0 - (leaderPct / 10.0));
+            var startOffset = -(leaderPct * 5);
+            
+            var finishOpacity = leaderPct < 80 ? 0 : Math.Min(1.0, (leaderPct - 80) / 20.0);
+            var finishOffset = Math.Max(0, (100 - leaderPct) * 3);
+        }
+
+        <div class="start-line"
+             style="opacity: @(startOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+            transform: translateX(@(startOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">
+            START
+        </div>
+        
+        <div class="finish-zone"
+             style="opacity: @(finishOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
+            transform: translateX(@(finishOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">
+            FINISH
+        </div>
 
         @for (int i = 0; i < Engine.Participants.Count; i++)
         {
@@ -88,6 +117,7 @@
         <table class="premium-table">
             <thead>
                 <tr>
+                    <th>POS</th>
                     <th>CAR MODEL</th>
                     <th>SPEED</th>
                     <th>STATUS</th>
@@ -95,13 +125,43 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var v in Engine.Participants.OrderByDescending(x => x.Position))
+                @{
+                    var rankedParticipants = Engine.Participants
+                        .OrderByDescending(v => v.Position >= _trackLen && !v.IsBroken)
+                        .ThenBy(v => v.Position >= _trackLen && !v.IsBroken ? v.RaceTime : TimeSpan.MaxValue)
+                        .ThenByDescending(v => v.Position)
+                        .ToList();
+                }
+                
+                @for (int i = 0; i < rankedParticipants.Count; i++)
                 {
-                    var isFinished = v.Position >= _trackLen;
+                    var v = rankedParticipants[i];
+                    var isFinished = v.Position >= _trackLen && !v.IsBroken;
                     var liveSpeed = (Engine.IsRacing && !v.IsBroken && !isFinished)
                                     ? Math.Round(v.Speed * v.Acceleration * 6) : 0;
+                    
+                    string positionBadge = "-";
+                    if (isFinished)
+                    {
+                        if (i == 0) positionBadge = "🏆 1ST";
+                        else if (i == 1) positionBadge = "🥈 2ND";
+                        else if (i == 2) positionBadge = "🥉 3RD";
+                        else positionBadge = $"{i + 1}th";
+                    }
 
-                    <tr class="@(isFinished ? "row-success" : v.IsBroken ? "row-danger" : "")">
+                    <tr class="@(isFinished && i == 0 ? "row-winner" : isFinished ? "row-success" : v.IsBroken ? "row-danger" : "")">
+                        <td class="pos-cell">
+                            @if (positionBadge != "-")
+                            {
+                                <span class="rank-badge @(i == 0 ? "rank-gold" : i == 1 ? "rank-silver" : i == 2 ? "rank-bronze" : "")">
+                                    @positionBadge
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="rank-badge rank-none">-</span>
+                            }
+                        </td>
                         <td>
                             <div class="car-name-cell">
                                 <span class="color-dot" style="background: @v.Color; box-shadow: 0 0 8px @v.Color;"></span>
@@ -117,7 +177,7 @@
                             else if (v.IsBroken)
                             {
 
-                                <span class="status-badge badge-danger">REPAIRING</span>
+                                <span class="status-badge badge-danger">BROKEN</span>
                             }
                             else if (Engine.IsRacing)
                             {
@@ -130,7 +190,7 @@
                                 <span class="status-badge badge-idle">READY</span>
                             }
                         </td>
-                        <td class="digital-text">@v.RaceTime.ToString(@"mm\:ss\.fff")</td>
+                        <td class="digital-text">@(v.RaceTime.TotalSeconds > 0 ? v.RaceTime.ToString(@"mm\:ss\.fff") : "--:--.---")</td>
                     </tr>
                 }
             </tbody>
@@ -139,7 +199,7 @@
 </div>
 
 @code {
-    private const double _trackLen = 1000; // ЗБІЛЬШИЛИ ДИСТАНЦІЮ ВДВІЧІ
+    private const double _trackLen = 1000;
     private int _betAmount = 100;
     private int _betCarIndex = 0;
     private bool _betPlaced = false;
@@ -161,8 +221,38 @@
     private async Task StartRace()
     {
         if (Engine.IsRacing) return;
-        _betPlaced = false;
+        
         await Engine.StartRace(_trackLen);
+
+        if (_betPlaced)
+        {
+            var betCar = Engine.Participants[_betCarIndex];
+            
+            // 1. Шукаємо справжнього переможця (доїхав + найкращий час)
+            var realWinner = Engine.Participants
+                .Where(v => v.Position >= _trackLen && !v.IsBroken)
+                .OrderBy(v => v.RaceTime)
+                .FirstOrDefault();
+
+            // 2. Дивимось, кому бекенд Тьомчика віддав перемогу (залетів найдалі)
+            var tjomchikWinner = Engine.Participants
+                .OrderByDescending(v => v.Position)
+                .FirstOrDefault();
+
+            // 3. Корегуємо баланс
+            if (realWinner == betCar && tjomchikWinner != betCar)
+            {
+                // Ми виграли, але бекенд не дав грошей -> додаємо самі
+                Engine.UserBalance += (decimal)_betAmount * (decimal)betCar.WinCoefficient;
+            }
+            else if (realWinner != betCar && tjomchikWinner == betCar)
+            {
+                // Ми програли, але бекенд помилково дав гроші -> забираємо
+                Engine.UserBalance -= (decimal)_betAmount * (decimal)betCar.WinCoefficient;
+            }
+        }
+
+        _betPlaced = false;
     }
 
     private void PlaceBet()
@@ -177,6 +267,13 @@
     {
         if (Engine.IsRacing) return;
         Engine.ResetRace();
+        
+        // Оновлюємо статки для кожної гонки
+        foreach (var car in Engine.Participants)
+        {
+            car.GenerateNewStats();
+        }
+        
         _betPlaced = false;
     }
 
