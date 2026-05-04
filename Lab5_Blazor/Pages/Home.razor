@@ -1,7 +1,46 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Головне меню</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container text-center mt-5">
+    <h1 class="mb-4">Лабораторна робота №5</h1>
+    <p class="lead mb-5">Оберіть завдання для перегляду результатів</p>
 
-Welcome to your new app.
+    <div class="row justify-content-center gap-4">
+        <!-- Картка Завдання 1 -->
+        <div class="col-md-5 col-sm-12">
+            <div class="card shadow-sm h-100 border-0 bg-light">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="mb-3">
+                        <span class="fs-1">🏎️</span>
+                    </div>
+                    <h3 class="card-title fw-bold">Завдання 1: Забіг</h3>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Симуляція гонки машинок з системою ставок, анімацією поломок та динамічним рейтингом результатів.
+                    </p>
+                    <a href="/race" class="btn btn-primary btn-lg mt-3 w-100 shadow-sm">
+                        Перейти до Забігу
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Картка Завдання 2 -->
+        <div class="col-md-5 col-sm-12">
+            <div class="card shadow-sm h-100 border-0 bg-light">
+                <div class="card-body d-flex flex-column p-4">
+                    <div class="mb-3">
+                        <span class="fs-1">🕸️</span>
+                    </div>
+                    <h3 class="card-title fw-bold">Завдання 2: Вороной</h3>
+                    <p class="card-text flex-grow-1 text-muted">
+                        Побудова локусів для заданих вершин з підтримкою перемикання між однопоточним та паралельним режимами.
+                    </p>
+                    <a href="/voronoi" class="btn btn-dark btn-lg mt-3 w-100 shadow-sm">
+                        Перейти до Вороного
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

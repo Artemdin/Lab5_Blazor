@@ -1,3 +1,25 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<div class="d-flex" style="min-height: 100vh;">
+    <!-- Бокове меню -->
+    <div class="bg-dark text-white p-3" style="width: 250px;">
+        <h4 class="mb-4 text-center mt-2">OOP Lab 5</h4>
+        <hr class="border-secondary" />
+        <nav class="nav flex-column gap-2">
+            <NavLink class="nav-link text-white rounded" href="" Match="NavLinkMatch.All">
+                🏠 Головна
+            </NavLink>
+            <NavLink class="nav-link text-white rounded" href="race">
+                🏎️ Забіг
+            </NavLink>
+            <NavLink class="nav-link text-white rounded" href="voronoi">
+                🕸️ Вороной
+            </NavLink>
+        </nav>
+    </div>
+
+    <!-- Основний контент (тут буде рендеритись Home, Race або Voronoi) -->
+    <main class="flex-grow-1 p-4 bg-white">
+        @Body
+    </main>
+</div>
