@@ -62,5 +62,15 @@ namespace Lab5_Blazor.Models
         {
             Position += 50; // Миттєвий ривок / Turbo Boost
         }
+
+        public void GenerateNewStats()
+        {
+            // Оновлюємо швидкість, щоб кожна гонка була унікальною
+            Speed = _rng.Next(7, 13);
+
+            // Генеруємо новий коефіцієнт 
+            WinCoefficient = Math.Round(1.5 + _rng.NextDouble() * 2, 2);
+        }   
+
     }
 }
