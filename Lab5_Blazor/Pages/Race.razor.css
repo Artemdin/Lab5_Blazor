@@ -1,0 +1,424 @@
+﻿/* ─── КОЛЬОРИ ТА БАЗА ─── */
+:root {
+    --panel-bg: rgba(12, 15, 22, 0.85);
+    --panel-border: rgba(255, 255, 255, 0.05);
+    --neon-green: #00ff66;
+    --neon-red: #ff0055;
+    --text-main: #e2e8f0;
+    --text-muted: #64748b;
+}
+
+.jdm-race-theme {
+    position: relative;
+    background: radial-gradient(circle at top, #0d121c, #050608 90%);
+    color: var(--text-main);
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 30px;
+    z-index: 1;
+}
+
+/* Ефект CRT монітора / Scanlines */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+    background-size: 100% 4px;
+    z-index: 999;
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+/* ─── МАТОВЕ СКЛО (GLASSMORPHISM) ─── */
+.glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 2;
+}
+
+/* ─── ПАНЕЛЬ КЕРУВАННЯ ─── */
+.control-dashboard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    margin-bottom: 25px;
+    border-top: 1px solid rgba(0, 255, 102, 0.2);
+}
+
+.balance-widget {
+    background: rgba(0, 255, 102, 0.05);
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 102, 0.15);
+}
+
+.widget-label {
+    font-size: 0.75rem;
+    color: var(--neon-green);
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.money-text {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
+    font-family: 'Courier New', monospace;
+}
+
+.betting-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 5px 15px;
+    transition: border-color 0.3s;
+}
+
+    .input-wrapper:focus-within {
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(0,255,102,0.2);
+    }
+
+.input-icon {
+    margin-right: 10px;
+    filter: grayscale(0.5);
+}
+
+.premium-input {
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 8px 0;
+    font-size: 0.95rem;
+    outline: none;
+    width: 100%;
+}
+
+    .premium-input:disabled {
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+
+/* КНОПКИ */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-glow, .btn-solid {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    text-transform: uppercase;
+}
+
+.btn-glow {
+    background: linear-gradient(135deg, #00ff66, #00b347);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+}
+
+    .btn-glow:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 0 30px rgba(0, 255, 102, 0.6);
+    }
+
+.btn-place-bet {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+    .btn-place-bet:hover:not(:disabled) {
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+    }
+
+.btn-solid {
+    background: rgba(255, 0, 85, 0.1);
+    color: var(--neon-red);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+}
+
+    .btn-solid:hover:not(:disabled) {
+        background: rgba(255, 0, 85, 0.2);
+        box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+    }
+
+    .btn-glow:disabled, .btn-solid:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(1);
+        transform: none;
+        box-shadow: none;
+    }
+
+/* ─── ТРАСА ─── */
+.track-area {
+    position: relative;
+    padding: 30px 0;
+    margin-bottom: 25px;
+    background-color: #07090e;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 80px rgba(0, 0, 0, 1); /* Глибокі тіні по краях */
+}
+
+/* Ефект руху повітря (швидкісні лінії) */
+.speed-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(255,255,255,0.03) 100px, rgba(255,255,255,0.03) 150px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.5s;
+}
+
+    .speed-lines.active {
+        opacity: 1;
+        animation: speedPan 0.3s linear infinite;
+    }
+
+@keyframes speedPan {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-150px);
+    }
+}
+
+.neon-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    z-index: 10;
+}
+
+.start-line {
+    left: 0;
+    background: var(--neon-green);
+    box-shadow: 0 0 20px var(--neon-green), 0 0 40px var(--neon-green);
+}
+
+.finish-line {
+    right: 0;
+    background: var(--neon-red);
+    box-shadow: 0 0 20px var(--neon-red), 0 0 40px var(--neon-red);
+}
+
+.track-lane {
+    position: relative;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    z-index: 5;
+    border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+
+/* 🏎️ ЗМЕНШЕНІ АВТО 🏎️ */
+.car-container {
+    position: absolute;
+    width: 75px; /* БУЛО 120px - ТЕПЕР МЕНШІ */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.1s linear;
+}
+
+.car-img {
+    width: 100%;
+    z-index: 2;
+    filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.8));
+}
+
+.car-shadow {
+    position: absolute;
+    bottom: -2px;
+    width: 80%;
+    height: 6px;
+    border-radius: 50%;
+    filter: blur(6px);
+    opacity: 0.6;
+    z-index: 1;
+}
+
+.broken-fx {
+    filter: grayscale(1) brightness(0.25);
+}
+
+.alert-badge {
+    position: absolute;
+    top: -20px;
+    background: var(--neon-red);
+    color: white;
+    font-size: 0.55rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 3;
+    box-shadow: 0 0 10px var(--neon-red);
+}
+
+.warning-pulse {
+    animation: pulse 1s infinite;
+}
+
+/* ─── СТАТИСТИКА ─── */
+.stats-dashboard {
+    padding: 20px;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+}
+
+    .premium-table th {
+        text-align: left;
+        padding: 0 20px 10px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        font-weight: 700;
+    }
+
+    .premium-table td {
+        padding: 14px 20px;
+        background: rgba(0, 0, 0, 0.4);
+        border-top: 1px solid rgba(255,255,255,0.02);
+        border-bottom: 1px solid rgba(255,255,255,0.02);
+    }
+
+        .premium-table td:first-child {
+            border-left: 1px solid rgba(255,255,255,0.02);
+            border-radius: 8px 0 0 8px;
+        }
+
+        .premium-table td:last-child {
+            border-right: 1px solid rgba(255,255,255,0.02);
+            border-radius: 0 8px 8px 0;
+        }
+
+    .premium-table tr:hover td {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+.row-success td {
+    background: linear-gradient(90deg, rgba(0, 255, 102, 0.05), rgba(0,0,0,0.4));
+    border-color: rgba(0, 255, 102, 0.1);
+}
+
+.row-danger td {
+    background: linear-gradient(90deg, rgba(255, 0, 85, 0.05), rgba(0,0,0,0.4));
+    border-color: rgba(255, 0, 85, 0.1);
+}
+
+.car-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.digital-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Бейджи статусів */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.badge-success {
+    background: rgba(0, 255, 102, 0.15);
+    color: var(--neon-green);
+    border: 1px solid rgba(0, 255, 102, 0.3);
+}
+
+.badge-danger {
+    background: rgba(255, 0, 85, 0.15);
+    color: var(--neon-red);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+}
+
+.badge-racing {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    animation: pulse 1.5s infinite;
+}
+
+.badge-idle {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
