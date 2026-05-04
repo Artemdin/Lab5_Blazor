@@ -31,17 +31,17 @@ namespace Lab5_Blazor.Services
 
             double weatherMultiplier = CurrentWeather switch
             {
-                Weather.Rain => 0.7,
-                Weather.Fog => 0.5,
+                Weather.Rain => 0.4,
+                Weather.Fog => 0.25,
                 _ => 1.0
             };
-
+            // Створюємо список асинхронних задач
             var tasks = Participants.Select(async v =>
             {
-                while (v.Position < trackLength && !cts.IsCancellationRequested)
+                while (v.Position < trackLength && !cts.IsCancellationRequested) // Перевірка на завершення гонки
                 {
                     await v.MoveAsync(weatherMultiplier, cts.Token);
-                    v.RaceTime = DateTime.Now - startTime;
+                    v.RaceTime = DateTime.Now - startTime; // Оновлюємо час гонки
 
                     OnStateChanged?.Invoke(); // Повідомляємо фронтенд про зміни
                     await Task.Delay(50); // Частота оновлення
@@ -56,7 +56,8 @@ namespace Lab5_Blazor.Services
             {
                 UserBalance += _currentBetAmount * (decimal)winner.WinCoefficient;
             }
-
+           
+            // Очищуємо дані про ставку для наступної гонки
             _betOnVehicle = null;
             _currentBetAmount = 0;
 
@@ -64,7 +65,7 @@ namespace Lab5_Blazor.Services
             OnStateChanged?.Invoke();
         }
 
-        public void PlaceBet(Vehicle vehicle, decimal amount)
+        public void PlaceBet(Vehicle vehicle, decimal amount) // Ставка на транспортний засіб
         {
             if (UserBalance >= amount && !IsRacing)
             {
@@ -74,7 +75,7 @@ namespace Lab5_Blazor.Services
             }
         }
 
-        public void ResetRace()
+        public void ResetRace() // Повернення всіх машин на старт
         {
             foreach (var v in Participants)
             {

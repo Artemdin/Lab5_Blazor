@@ -21,7 +21,7 @@ namespace Lab5_Blazor.Models
         {
             Name = name;
             Color = color;
-            Speed = _rng.Next(5, 11); // швидкість від 5 до 10 одиниць
+            Speed = _rng.Next(7, 13); // швидкість від 7 до 13 одиниць
             WinCoefficient = Math.Round(1.5 + _rng.NextDouble() * 2, 2);
         }
 
