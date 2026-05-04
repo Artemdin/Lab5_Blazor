@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lab5_Blazor</title>
     <base href="/" />
-    <link rel="stylesheet" href="css/app.css" />
-    <!-- If you add any scoped CSS files, uncomment the following to load them
-    <link href="Lab5_Blazor.styles.css" rel="stylesheet" /> -->
-</head>
 
+    <!-- Підключення Bootstrap для загального макету (бокове меню) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <!-- Базові стилі додатку -->
+    <link rel="stylesheet" href="css/app.css" />
+
+    <!-- Твої ізольовані стилі (Glassmorphism для Home.razor.css) -->
+    <link href="Lab5_Blazor.styles.css" rel="stylesheet" />
+</head>
 <body>
     <div id="app">
+        <!-- Анімація завантаження -->
         <svg class="loading-progress">
             <circle r="40%" cx="50%" cy="50%" />
             <circle r="40%" cx="50%" cy="50%" />
@@ -25,7 +30,8 @@
         <a href="." class="reload">Reload</a>
         <span class="dismiss">🗙</span>
     </div>
+
+    <!-- Скрипт Blazor -->
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
-
 </html>

@@ -1,0 +1,187 @@
+﻿/* Основний чорний контейнер на весь екран */
+.black-canvas {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background-color: #020202;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: #ffffff;
+}
+
+/* Темно-зелена матрична сітка на фоні */
+.grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(15, 64, 27, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 64, 27, 0.15) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: 1;
+    animation: panGrid 20s linear infinite;
+    opacity: 0.5;
+}
+
+/* Анімація руху фону */
+@keyframes panGrid {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(50px);
+    }
+}
+
+.content-wrapper {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeUp {
+    0% {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Типографіка */
+.main-title {
+    font-size: 5rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin-bottom: 0;
+    text-shadow: 0 0 30px rgba(21, 107, 51, 0.3);
+}
+
+.dark-green-text {
+    color: #156b33;
+}
+
+.main-subtitle {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: #888888;
+    margin-bottom: 4rem;
+    letter-spacing: 2px;
+}
+
+/* Контейнер для карток */
+.cyber-cards-container {
+    display: flex;
+    gap: 3rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* АНІМОВАНА КАРТКА */
+.cyber-card {
+    position: relative;
+    width: 380px;
+    height: 420px;
+    background: #000;
+    text-decoration: none;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: transform 0.4s ease;
+}
+
+    /* Трюк з рамкою: круговий градієнт, що обертається */
+    .cyber-card::before {
+        content: '';
+        position: absolute;
+        width: 150%;
+        height: 150%;
+        background: conic-gradient(transparent, transparent, transparent, #156b33);
+        animation: borderSpin 4s linear infinite;
+    }
+
+    .cyber-card:hover::before {
+        background: conic-gradient(transparent, transparent, #0f401b, #1e9949);
+        animation: borderSpin 2s linear infinite;
+    }
+
+@keyframes borderSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Внутрішня частина картки (перекриває градієнт, залишаючи лише рамку) */
+.card-inner {
+    position: absolute;
+    inset: 2px; /* Це товщина рамки */
+    background-color: #050505;
+    border-radius: 2px;
+    z-index: 2;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    transition: background-color 0.4s ease;
+}
+
+.cyber-card:hover .card-inner {
+    background-color: #080808;
+    box-shadow: inset 0 0 50px rgba(21, 107, 51, 0.1);
+}
+
+.cyber-card:hover {
+    transform: translateY(-10px);
+}
+
+/* Вміст картки */
+.icon-box {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    filter: grayscale(100%) brightness(200%); /* Робимо емодзі чорно-білими/світлими для стилю */
+}
+
+.card-inner h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.card-inner p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #999999;
+    flex-grow: 1;
+}
+
+.btn-fake {
+    font-family: monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #156b33;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.cyber-card:hover .btn-fake {
+    color: #ffffff;
+    text-shadow: 0 0 10px #156b33;
+    letter-spacing: 1px;
+}
