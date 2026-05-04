@@ -36,15 +36,18 @@ namespace Lab5_Blazor.Models
         {
             if (IsBroken) return;
 
-            // Шанс поломки 
-            if (_rng.NextDouble() < 0.005) // 0.5% шанс на кожному кроці
+            // Додаємо вплив погоди на ймовірність поломки
+            // Якщо дощ, шанс поломки зростає
+            double breakdownChance = 0.005;
+            if (weatherMultiplier < 1.0) breakdownChance = 0.02; // В погану погоду ламається частіше
+
+            if (_rng.NextDouble() < breakdownChance)
             {
                 await Breakdown();
+                return;
             }
 
             await ChangeAcceleration();
-
-            // Розрахунок руху з урахуванням погоди
             Position += Speed * Acceleration * weatherMultiplier;
         }
 
