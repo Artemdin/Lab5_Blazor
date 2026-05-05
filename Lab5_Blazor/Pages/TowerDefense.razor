@@ -433,19 +433,19 @@
         GameManager.CurrentWave++;
         WaveMessage = $"{GameManager.CurrentWave} хвиля почалась!";
 
-        var enemiesToSpawn = 18 + (GameManager.CurrentWave * 6);
-        var isBossWave = GameManager.CurrentWave % 10 == 0;
+        var isBossWave = GameManager.CurrentWave % 5 == 0;
+        var enemiesToSpawn = isBossWave ? 0 : GameManager.CurrentWave;
         if (isBossWave)
         {
-            enemiesToSpawn += 20;
             WaveMessage = $"BOSS WAVE {GameManager.CurrentWave}!";
         }
 
+        const double spawnSpacing = 34.0;
         for (int i = 0; i < enemiesToSpawn; i++)
         {
             Enemies.Add(new Enemy
             {
-                X = EnemyPath[0].X,
+                X = EnemyPath[0].X - (i * spawnSpacing),
                 Y = EnemyPath[0].Y,
                 HP = 55,
                 MaxHP = 55,
@@ -458,7 +458,7 @@
         {
             Enemies.Add(new Enemy
             {
-                X = EnemyPath[0].X,
+                X = EnemyPath[0].X - ((enemiesToSpawn + 2) * spawnSpacing),
                 Y = EnemyPath[0].Y,
                 IsBoss = true,
                 HP = 620,
