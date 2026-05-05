@@ -1,0 +1,612 @@
+﻿@page "/tower-defense"
+@using Lab5_Blazor.GameLogic
+@using System.Globalization
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="redline-td">
+    <div class="border-runner"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="grid-bg">
+        <div class="grid-plane layer-a"></div>
+        <div class="grid-plane layer-b"></div>
+    </div>
+
+    <header class="hud-bar panel-frame skew-shell">
+        <span class="panel-corner tl"></span>
+        <span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span>
+        <span class="panel-corner br"></span>
+
+        <div class="hud-brand unskew">
+            <span class="brand-line"></span>
+            <div class="brand-stack">
+                <span class="brand-text">REDLINE <em>TACTICAL</em></span>
+                <span class="brand-sub">GT-R AI / DEFENSE GRID / SECTOR PRIME</span>
+            </div>
+        </div>
+
+        <div class="hud-stats unskew">
+            <div class="stat-badge gold skew-shell">
+                <div class="badge-inner unskew">
+                    <span class="stat-label">GOLD</span>
+                    <span class="stat-value gold-value chroma">@GameManager.Gold</span>
+                </div>
+            </div>
+            <div class="stat-badge wave skew-shell">
+                <div class="badge-inner unskew">
+                    <span class="stat-label">WAVE</span>
+                    <span class="stat-value wave-value">@GameManager.CurrentWave</span>
+                </div>
+            </div>
+            <div class="stat-badge score skew-shell">
+                <div class="badge-inner unskew">
+                    <span class="stat-label">SCORE</span>
+                    <span class="stat-value score-value chroma">@GameManager.Score</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud-controls unskew">
+            <button class="ctrl-btn danger start @(IsRunning ? "active" : "")" @onclick="StartWave">
+                <span class="btn-fx"></span>
+                <span class="btn-label">@(IsRunning ? "■ ABORT WAVE" : "▶ LAUNCH WAVE")</span>
+            </button>
+            <button class="ctrl-btn upgrade" @onclick="UpgradeSelectedTower" disabled="@(SelectedTower == null)">
+                <span class="btn-fx"></span>
+                <span class="btn-label">⬆ UPGRADE [50G]</span>
+            </button>
+            <button class="ctrl-btn reset" @onclick="ResetGame">
+                <span class="btn-fx"></span>
+                <span class="btn-label">↺ SYSTEM RESET</span>
+            </button>
+            <button class="ctrl-btn reset" @onclick="ReloadGame">
+                <span class="btn-fx"></span>
+                <span class="btn-label">⟳ HARD RELOAD</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="arena-wrap">
+        <section class="battlefield panel-frame">
+            <span class="panel-corner tl"></span>
+            <span class="panel-corner tr"></span>
+            <span class="panel-corner bl"></span>
+            <span class="panel-corner br"></span>
+
+            <div class="field-label">TACTICAL MAP :: REDLINE 7G</div>
+            <div class="wave-message">@WaveMessage</div>
+
+            <svg class="game-svg" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" @onclick="OnMapClick" @onmousemove="OnMapMouseMove">
+                <defs>
+                    <filter id="red-glow">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur1" />
+                        <feColorMatrix in="blur1" type="matrix"
+                                       values="1 0 0 0 0
+                                               0 0 0 0 0
+                                               0 0 0 0 0
+                                               0 0 0 1 0" result="redLayer" />
+                        <feMerge>
+                            <feMergeNode in="redLayer" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+
+                    <filter id="orb-glitch">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="7" result="noise" />
+                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G" />
+                    </filter>
+
+                    <filter id="laser-outer">
+                        <feGaussianBlur stdDeviation="4" result="laserBlur" />
+                        <feColorMatrix type="matrix"
+                                       values="1 0 0 0 0
+                                               0 0 0 0 0
+                                               0 0 0 0 0
+                                               0 0 0 1 0" />
+                    </filter>
+
+                    <radialGradient id="enemy-grad" cx="50%" cy="30%" r="75%">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.75" />
+                        <stop offset="55%" stop-color="#ff0033" stop-opacity="0.9" />
+                        <stop offset="100%" stop-color="#050505" stop-opacity="0.95" />
+                    </radialGradient>
+
+                    <linearGradient id="turret-grad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" />
+                        <stop offset="100%" stop-color="#4d4d4d" />
+                    </linearGradient>
+
+                    <pattern id="radar-grid" width="45" height="45" patternUnits="userSpaceOnUse">
+                        <path d="M 45 0 L 0 0 0 45" fill="none" stroke="#ffffff12" stroke-width="0.5" vector-effect="non-scaling-stroke" />
+                    </pattern>
+                </defs>
+
+                <rect width="1200" height="700" fill="url(#radar-grid)" />
+
+                <path class="road-main" d="M 0 330 L 260 330 L 260 170 L 920 170 L 920 520 L 1200 520"
+                      stroke="#101010" stroke-width="64" fill="none" stroke-linecap="square" vector-effect="non-scaling-stroke" />
+                <path class="road-center" d="M 0 330 L 260 330 L 260 170 L 920 170 L 920 520 L 1200 520"
+                      stroke="#ff003390" stroke-width="2" fill="none" stroke-dasharray="20 12" vector-effect="non-scaling-stroke" />
+                <g class="speed-particles">
+                    <circle r="2.2" class="speed-dot" vector-effect="non-scaling-stroke">
+                        <animateMotion dur="1.8s" repeatCount="indefinite" path="M 0 330 L 260 330 L 260 170 L 920 170 L 920 520 L 1200 520" />
+                    </circle>
+                    <circle r="1.8" class="speed-dot" vector-effect="non-scaling-stroke">
+                        <animateMotion dur="2.2s" begin="-0.8s" repeatCount="indefinite" path="M 0 330 L 260 330 L 260 170 L 920 170 L 920 520 L 1200 520" />
+                    </circle>
+                    <circle r="1.4" class="speed-dot" vector-effect="non-scaling-stroke">
+                        <animateMotion dur="2.8s" begin="-1.3s" repeatCount="indefinite" path="M 0 330 L 260 330 L 260 170 L 920 170 L 920 520 L 1200 520" />
+                    </circle>
+                </g>
+
+                <text x="120" y="305" class="sector-tag">A1</text>
+                <text x="410" y="150" class="sector-tag">B2</text>
+                <text x="730" y="150" class="sector-tag">C3</text>
+                <text x="1020" y="500" class="sector-tag">D4</text>
+
+                @foreach (var shot in ActiveShots)
+                {
+                    <line class="laser-outer"
+                          x1="@SvgNum(shot.X1)" y1="@SvgNum(shot.Y1)"
+                          x2="@SvgNum(shot.X2)" y2="@SvgNum(shot.Y2)"
+                          style="opacity:@shot.Opacity.ToString("F2");"
+                          filter="url(#laser-outer)"
+                          vector-effect="non-scaling-stroke" />
+                    <line class="laser-core"
+                          x1="@SvgNum(shot.X1)" y1="@SvgNum(shot.Y1)"
+                          x2="@SvgNum(shot.X2)" y2="@SvgNum(shot.Y2)"
+                          style="opacity:@shot.Opacity.ToString("F2");"
+                          vector-effect="non-scaling-stroke" />
+                }
+
+                @foreach (var tower in Towers)
+                {
+                    <g class="tower-group @(SelectedTower == tower ? "selected" : "")"
+                       transform="translate(@SvgNum(tower.X), @SvgNum(tower.Y))"
+                       @onclick:stopPropagation="true"
+                       @onclick="() => SelectTower(tower)">
+
+                        <circle class="range-ring" r="@tower.Range" vector-effect="non-scaling-stroke" />
+                        <circle class="tower-radar" r="28" vector-effect="non-scaling-stroke" />
+
+                        <rect class="tower-base" x="-16" y="-16" width="32" height="32" rx="4" vector-effect="non-scaling-stroke" />
+                        <polygon class="tower-body" points="0,-13 12,-1 8,12 -8,12 -12,-1" vector-effect="non-scaling-stroke" />
+                        <rect class="tower-barrel" x="-2.5" y="-22" width="5" height="16" rx="1.5" vector-effect="non-scaling-stroke" />
+
+                        <text class="tower-level" x="0" y="5">@tower.Level</text>
+                        <circle class="select-ring" r="23" vector-effect="non-scaling-stroke" />
+                    </g>
+                }
+
+                @foreach (var enemy in Enemies.Where(e => !e.HasEscaped))
+                {
+                    <g class="enemy-group @(enemy.IsBoss ? "boss" : "")" transform="translate(@SvgNum(enemy.X), @SvgNum(enemy.Y))" filter="url(#orb-glitch)">
+                        <ellipse class="enemy-shadow" cx="0" cy="11" rx="12" ry="4" vector-effect="non-scaling-stroke" />
+                        <circle class="enemy-body" r="11" filter="url(#red-glow)" vector-effect="non-scaling-stroke" />
+                        <circle class="enemy-core" r="4" vector-effect="non-scaling-stroke" />
+
+                        <rect class="hp-bar-bg" x="-18" y="-30" width="36" height="5" rx="2" vector-effect="non-scaling-stroke" />
+                        <rect class="hp-bar-fill" x="-18" y="-30" width="@SvgNum((enemy.HP / (double)enemy.MaxHP) * 36)" height="5" rx="2" vector-effect="non-scaling-stroke" />
+
+                        <g class="hp-segments" transform="translate(-14,-23)">
+                            @for (int i = 0; i < 10; i++)
+                            {
+                                var isActive = enemy.HP > ((enemy.MaxHP / 10.0) * i);
+                                <rect x="@(i * 2.8)" y="0" width="2.2" height="4" class="hp-seg @(isActive ? "on" : "off")" vector-effect="non-scaling-stroke" />
+                            }
+                        </g>
+                    </g>
+                }
+
+                <g transform="translate(0, 330)">
+                    <circle class="spawn-marker" r="18" vector-effect="non-scaling-stroke" />
+                    <text class="spawn-label" x="0" y="5">IN</text>
+                </g>
+
+                <g transform="translate(1200, 520)">
+                    <circle class="exit-marker" r="18" vector-effect="non-scaling-stroke" />
+                    <text class="exit-label" x="0" y="5">OUT</text>
+                </g>
+            </svg>
+
+            <div class="tactical-cursor @(PlacingTower ? "deploy" : "")" style="left:@($"{CursorXPercent:F2}%"); top:@($"{CursorYPercent:F2}%");">
+                <svg viewBox="-40 -40 80 80" class="cursor-svg" aria-hidden="true">
+                    <circle r="9" class="cursor-center" />
+                    <line x1="-30" y1="0" x2="-12" y2="0" class="cursor-line" />
+                    <line x1="12" y1="0" x2="30" y2="0" class="cursor-line" />
+                    <line x1="0" y1="-30" x2="0" y2="-12" class="cursor-line" />
+                    <line x1="0" y1="12" x2="0" y2="30" class="cursor-line" />
+                    <path d="M-30 -30 L-18 -30 L-18 -24 M18 -30 L30 -30 L30 -24 M-30 30 L-18 30 L-18 24 M18 30 L30 30 L30 24"
+                          class="cursor-brackets" />
+                </svg>
+                <div class="cursor-readout">
+                    <span>X:@CursorX.ToString("F0")</span>
+                    <span>Y:@CursorY.ToString("F0")</span>
+                </div>
+                @if (PlacingTower)
+                {
+                    <div class="deploy-label">READY TO DEPLOY</div>
+                }
+            </div>
+
+            <button class="place-btn @(PlacingTower ? "placing" : "")" @onclick="TogglePlacement">
+                @(PlacingTower ? "◉ DEPLOY MODE ACTIVE" : "+ PLACE TACTICAL TURRET")
+            </button>
+        </section>
+
+        <aside class="sys-panel panel-frame">
+            <span class="panel-corner tl"></span>
+            <span class="panel-corner tr"></span>
+            <span class="panel-corner bl"></span>
+            <span class="panel-corner br"></span>
+
+            <div class="panel-header skew-shell">
+                <span class="panel-title unskew">SYS / TACTICAL</span>
+                <span class="panel-dot blink"></span>
+            </div>
+
+            <div class="mission-note">Розміщуйте вежі вручну. Будувати на маршруті ворогів не можна.</div>
+
+            <div class="panel-divider"></div>
+
+            <div class="mission-data">
+                <div class="mdata-header">MISSION DATA</div>
+                <div class="mdata-row"><span class="mdata-key">TOWERS ACTIVE</span><span class="mdata-val">@Towers.Count</span></div>
+                <div class="mdata-row"><span class="mdata-key">ENEMIES ALIVE</span><span class="mdata-val red">@Enemies.Count(e => !e.IsDead && !e.HasEscaped)</span></div>
+                <div class="mdata-row"><span class="mdata-key">KILLS THIS WAVE</span><span class="mdata-val">@KillsThisWave</span></div>
+                <div class="mdata-row"><span class="mdata-key">STATUS</span><span class="mdata-val @(IsRunning ? "green blink" : "dim")">@(IsRunning ? "ACTIVE" : "STANDBY")</span></div>
+            </div>
+
+            @if (SelectedTower != null)
+            {
+                <div class="panel-divider"></div>
+                <div class="tower-info">
+                    <div class="mdata-header">SELECTED UNIT</div>
+                    <div class="mdata-row"><span class="mdata-key">LEVEL</span><span class="mdata-val">@SelectedTower.Level</span></div>
+                    <div class="mdata-row"><span class="mdata-key">RANGE</span><span class="mdata-val">@SelectedTower.Range.ToString("F0")</span></div>
+                    <div class="mdata-row"><span class="mdata-key">FIRE RATE</span><span class="mdata-val">@SelectedTower.FireRate.ToString("F1")/s</span></div>
+                </div>
+            }
+        </aside>
+    </main>
+
+    <footer class="status-bar skew-shell">
+        <div class="ticker-wrap unskew">
+            <div class="ticker-inner">
+                <span>REDLINE TACTICAL AI ONLINE</span>
+                <span class="sep">◆</span>
+                <span>WAVE @GameManager.CurrentWave :: ARMED</span>
+                <span class="sep">◆</span>
+                <span>GOLD @GameManager.Gold</span>
+                <span class="sep">◆</span>
+                <span>SCORE @GameManager.Score</span>
+                <span class="sep">◆</span>
+                <span>@WaveMessage</span>
+                <span class="sep">◆</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+@code {
+    private GameManager GameManager { get; set; } = new();
+    private List<TowerViewModel> Towers { get; set; } = new();
+    private List<Enemy> Enemies { get; set; } = new();
+    private List<ShotViewModel> ActiveShots { get; set; } = new();
+
+    private TowerViewModel? SelectedTower;
+    private bool IsRunning = false;
+    private bool PlacingTower = false;
+    private int KillsThisWave = 0;
+    private double CursorX = 450;
+    private double CursorY = 280;
+    private string WaveMessage = "Система онлайн. Постав першу вежу.";
+    private const double MapWidth = 1200.0;
+    private const double MapHeight = 700.0;
+    private static readonly (double X, double Y)[] EnemyPath =
+    {
+        (0, 330), (260, 330), (260, 170), (920, 170), (920, 520), (1200, 520)
+    };
+
+    private CancellationTokenSource? _cts;
+
+    private class TowerViewModel : Tower
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public DateTime LastShotAt { get; set; } = DateTime.MinValue;
+    }
+
+    private class ShotViewModel
+    {
+        public double X1, Y1, X2, Y2;
+        public int Life { get; set; } = 4;
+        public int MaxLife { get; set; } = 4;
+        public double Opacity => MaxLife == 0 ? 0 : (double)Life / MaxLife;
+    }
+
+    private double CursorXPercent => Math.Clamp((CursorX / MapWidth) * 100.0, 0, 100);
+    private double CursorYPercent => Math.Clamp((CursorY / MapHeight) * 100.0, 0, 100);
+
+    protected override void OnInitialized()
+    {
+        // Intentionally no starter towers: player places all towers manually.
+    }
+
+    private void OnMapMouseMove(MouseEventArgs e)
+    {
+        CursorX = Math.Clamp(e.OffsetX, 0, MapWidth);
+        CursorY = Math.Clamp(e.OffsetY, 0, MapHeight);
+    }
+
+    private void OnMapClick(MouseEventArgs e)
+    {
+        OnMapMouseMove(e);
+        if (!PlacingTower) return;
+
+        const int towerCost = 50;
+        if (GameManager.Gold < towerCost)
+        {
+            WaveMessage = $"Недостатньо золота для вежі ({towerCost}G).";
+            StateHasChanged();
+            return;
+        }
+
+        if (IsPointOnRoad(CursorX, CursorY))
+        {
+            WaveMessage = "Не можна ставити вежу на дорозі.";
+            StateHasChanged();
+            return;
+        }
+
+        var tower = new TowerViewModel
+        {
+            X = Math.Clamp(CursorX, 24, MapWidth - 24),
+            Y = Math.Clamp(CursorY, 24, MapHeight - 24)
+        };
+
+        if (Towers.Any(t => CollisionHelper.IsHit(t.X, t.Y, tower.X, tower.Y, 36)))
+        {
+            WaveMessage = "Надто близько до іншої вежі.";
+            StateHasChanged();
+            return;
+        }
+
+        GameManager.Gold -= towerCost;
+        Towers.Add(tower);
+        PlacingTower = false;
+        WaveMessage = $"Вежу встановлено [{tower.X:F0}; {tower.Y:F0}]";
+        StateHasChanged();
+    }
+
+    private void SelectTower(TowerViewModel t)
+    {
+        SelectedTower = SelectedTower == t ? null : t;
+    }
+
+    private void TogglePlacement()
+    {
+        PlacingTower = !PlacingTower;
+        WaveMessage = PlacingTower ? "Режим побудови увімкнено." : "Режим побудови вимкнено.";
+    }
+
+    private async void StartWave()
+    {
+        if (IsRunning)
+        {
+            _cts?.Cancel();
+            IsRunning = false;
+            WaveMessage = $"Хвиля {GameManager.CurrentWave} перервана.";
+            StateHasChanged();
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsRunning = true;
+        KillsThisWave = 0;
+        GameManager.CurrentWave++;
+        WaveMessage = $"{GameManager.CurrentWave} хвиля почалась!";
+
+        var enemiesToSpawn = 12 + (GameManager.CurrentWave * 4);
+        var isBossWave = GameManager.CurrentWave % 10 == 0;
+        if (isBossWave)
+        {
+            enemiesToSpawn += 12;
+            WaveMessage = $"BOSS WAVE {GameManager.CurrentWave}!";
+        }
+
+        for (int i = 0; i < enemiesToSpawn; i++)
+        {
+            Enemies.Add(new Enemy
+            {
+                X = EnemyPath[0].X,
+                Y = EnemyPath[0].Y,
+                HP = 70,
+                MaxHP = 70,
+                PathPointIndex = 1
+            });
+        }
+
+        if (isBossWave)
+        {
+            Enemies.Add(new Enemy
+            {
+                X = EnemyPath[0].X,
+                Y = EnemyPath[0].Y,
+                IsBoss = true,
+                HP = 780,
+                MaxHP = 780,
+                PathPointIndex = 1
+            });
+        }
+
+        StateHasChanged();
+        await RunWaveLoop(_cts.Token);
+    }
+
+    private async Task RunWaveLoop(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested && Enemies.Any(e => !e.IsDead && !e.HasEscaped))
+            {
+                foreach (var e in Enemies.Where(e => !e.IsDead && !e.HasEscaped))
+                {
+                    MoveEnemyAlongPath(e);
+                }
+
+                foreach (var shot in ActiveShots)
+                {
+                    shot.Life--;
+                }
+                ActiveShots.RemoveAll(s => s.Life <= 0);
+
+                foreach (var tower in Towers)
+                {
+                    var fireCooldownMs = 1000.0 / Math.Max(0.4, tower.FireRate);
+                    if ((DateTime.UtcNow - tower.LastShotAt).TotalMilliseconds < fireCooldownMs)
+                    {
+                        continue;
+                    }
+
+                    foreach (var enemy in Enemies.Where(e => !e.IsDead && !e.HasEscaped))
+                    {
+                        if (CollisionHelper.IsHit(tower.X, tower.Y, enemy.X, enemy.Y, tower.Range))
+                        {
+                            tower.LastShotAt = DateTime.UtcNow;
+                            enemy.HP -= (int)(42 + (tower.Level * 10));
+                            ActiveShots.Add(new ShotViewModel
+                            {
+                                X1 = tower.X,
+                                Y1 = tower.Y,
+                                X2 = enemy.X,
+                                Y2 = enemy.Y,
+                                Life = 7,
+                                MaxLife = 7
+                            });
+
+                            if (enemy.IsDead)
+                            {
+                                GameManager.ProcessEnemyDeath(enemy.IsBoss);
+                                KillsThisWave++;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                Enemies.RemoveAll(e => e.IsDead || e.HasEscaped);
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(33, ct);
+            }
+        }
+        catch (TaskCanceledException) { }
+
+        ActiveShots.Clear();
+        IsRunning = false;
+        WaveMessage = $"{GameManager.CurrentWave} хвиля завершена!";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void UpgradeSelectedTower()
+    {
+        if (SelectedTower == null) return;
+        const int upgradeCost = 50;
+        if (GameManager.Gold < upgradeCost)
+        {
+            WaveMessage = $"Недостатньо золота для апгрейду ({upgradeCost}G).";
+            StateHasChanged();
+            return;
+        }
+        GameManager.LevelUpTower(SelectedTower);
+        WaveMessage = $"Вежу покращено до {SelectedTower.Level} рівня.";
+        StateHasChanged();
+    }
+
+    private void ResetGame()
+    {
+        _cts?.Cancel();
+        GameManager = new GameManager();
+        Towers.Clear();
+        Enemies.Clear();
+        ActiveShots.Clear();
+        IsRunning = false;
+        KillsThisWave = 0;
+        SelectedTower = null;
+        WaveMessage = "Гру скинуто. Готово до нової хвилі.";
+        StateHasChanged();
+    }
+
+    private void ReloadGame()
+    {
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    private bool IsPointOnRoad(double x, double y)
+    {
+        const double roadHalfWidth = 34.0;
+
+        for (int i = 0; i < EnemyPath.Length - 1; i++)
+        {
+            if (DistanceToSegment(x, y, EnemyPath[i].X, EnemyPath[i].Y, EnemyPath[i + 1].X, EnemyPath[i + 1].Y) <= roadHalfWidth)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void MoveEnemyAlongPath(Enemy enemy)
+    {
+        if (enemy.PathPointIndex >= EnemyPath.Length)
+        {
+            enemy.HasEscaped = true;
+            return;
+        }
+
+        var target = EnemyPath[enemy.PathPointIndex];
+        var speed = enemy.IsBoss ? 0.85 : 1.65;
+        var dx = target.X - enemy.X;
+        var dy = target.Y - enemy.Y;
+        var distance = Math.Sqrt((dx * dx) + (dy * dy));
+
+        if (distance <= speed || distance < 0.01)
+        {
+            enemy.X = target.X;
+            enemy.Y = target.Y;
+            enemy.PathPointIndex++;
+            if (enemy.PathPointIndex >= EnemyPath.Length)
+            {
+                enemy.HasEscaped = true;
+            }
+            return;
+        }
+
+        enemy.X += (dx / distance) * speed;
+        enemy.Y += (dy / distance) * speed;
+    }
+
+    private static double DistanceToSegment(double px, double py, double x1, double y1, double x2, double y2)
+    {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        if (Math.Abs(dx) < 0.001 && Math.Abs(dy) < 0.001)
+        {
+            return Math.Sqrt(((px - x1) * (px - x1)) + ((py - y1) * (py - y1)));
+        }
+
+        var t = ((px - x1) * dx + (py - y1) * dy) / ((dx * dx) + (dy * dy));
+        t = Math.Clamp(t, 0, 1);
+        var cx = x1 + (t * dx);
+        var cy = y1 + (t * dy);
+        return Math.Sqrt(((px - cx) * (px - cx)) + ((py - cy) * (py - cy)));
+    }
+
+    private static string SvgNum(double value) => value.ToString("F2", CultureInfo.InvariantCulture);
+
+    public void Dispose() => _cts?.Cancel();
+}

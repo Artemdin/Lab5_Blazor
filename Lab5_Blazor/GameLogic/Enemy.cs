@@ -6,7 +6,11 @@
         public double X { get; set; }
         public double Y { get; set; }
         public int HP { get; set; } = 100;
+        public int MaxHP { get; set; } = 100;
+        public bool IsBoss { get; set; }
+        public int PathPointIndex { get; set; }
         public bool IsDead => HP <= 0;
+        public bool HasEscaped { get; set; }
 
         public async Task MoveAsync(double targetX, double targetY, CancellationToken ct)
         {

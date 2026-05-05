@@ -6,10 +6,17 @@
         public int CurrentWave { get; set; } = 0;
         public int Score { get; set; } = 0;
 
-        public void ProcessEnemyDeath()
+        public void ProcessEnemyDeath(bool isBoss = false)
         {
-            Score += 50;
-            Gold += 15;
+            if (isBoss)
+            {
+                Score += 120;
+                Gold += 8;
+                return;
+            }
+
+            Score += 20;
+            Gold += 3;
         }
 
         public void LevelUpTower(Tower tower)
@@ -24,15 +31,15 @@
 
     public class Tower
     {
-        public double Range { get; set; } = 100;
-        public double FireRate { get; set; } = 1.0;
+        public double Range { get; set; } = 190;
+        public double FireRate { get; set; } = 1.15;
         public int Level { get; set; } = 1;
 
         public void Upgrade()
         {
             Level++;
-            Range += 20;
-            FireRate += 0.2;
+            Range += 30;
+            FireRate += 0.25;
         }
     }
 }

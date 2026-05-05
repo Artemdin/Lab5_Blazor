@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
