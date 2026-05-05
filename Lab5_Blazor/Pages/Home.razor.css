@@ -185,3 +185,86 @@
     text-shadow: 0 0 10px #156b33;
     letter-spacing: 1px;
 }
+
+/* Основний колір акценту тепер червоний для відповідності Voronoi */
+.red-text {
+    color: #ff0033;
+    text-shadow: 0 0 15px rgba(255, 0, 51, 0.5);
+}
+
+.cyber-cards-container {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 50px;
+}
+
+.cyber-card {
+    text-decoration: none;
+    color: #fff;
+    width: 320px;
+    background: #0a0a0a;
+    border: 1px solid #1f1f1f;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* Різкий зріз кута як у Voronoi */
+    clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+}
+
+    .cyber-card:hover {
+        transform: translateY(-10px);
+        border-color: #ff0033;
+        box-shadow: 0 10px 30px rgba(255, 0, 51, 0.2);
+    }
+
+.card-inner {
+    padding: 30px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.icon-box {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.cyber-card h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+}
+
+.cyber-card p {
+    font-size: 0.85rem;
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.btn-fake {
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ff0033;
+}
+
+    .btn-fake span {
+        margin-left: 5px;
+        animation: blink 1s infinite;
+    }
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Спеціальний акцент для Tower Defense */
+.special-red:hover .btn-fake {
+    color: #fff;
+}
