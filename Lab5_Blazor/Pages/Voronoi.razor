@@ -1,9 +1,351 @@
 ﻿@page "/voronoi"
+@using Lab5_Blazor
+@using System.Diagnostics
+@inject IJSRuntime JS
 
-<PageTitle>Діаграма Вороного</PageTitle>
+<div class="redline-terminal">
+    <div class="perspective-grid"></div>
+    <div class="vignette"></div>
 
-<div class="container mt-4">
-    <h2>Завдання 2: Діаграма Вороного</h2>
-    <p>Тут буде інтерактивне полотно для точок та панель налаштувань потоків.</p>
-    <!-- Пізніше тут будемо верстати UI Вороного -->
+    @* --- HUD: ПАНЕЛЬ КЕРУВАННЯ --- *@
+    <header class="hud-header">
+        <div class="brand">
+            <div class="r-badge">R</div>
+            <div class="title" data-text="СИСТЕМА ВОРОНОГО">СИСТЕМА ВОРОНОГО <span>V3</span></div>
+        </div>
+
+        <div class="controls">
+            <div class="unit">
+                <label>АВТО ТОЧКИ</label>
+                <div class="input-wrapper">
+                    <input type="number" @bind="_pointsCount" min="1" max="250" />
+                </div>
+            </div>
+
+            <div class="unit">
+                <label>МЕТРИКА</label>
+                <div class="input-wrapper">
+                    <select @bind="_selectedMetric">
+                        <option value="@MetricType.Euclidean">ЕВКЛІДОВА</option>
+                        <option value="@MetricType.Manhattan">МАНХЕТТЕНСЬКА</option>
+                        <option value="@MetricType.Chebyshev">ЧЕБИШЕВА</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="mode-toggle @(_useParallel ? "active" : "")" @onclick="() => _useParallel = !_useParallel">
+                <span class="lbl">РЕЖИМ:</span>
+                <span class="val">@(_useParallel ? "БАГАТОПОТОК" : "ОДИН ПОТІК")</span>
+            </button>
+
+            <div class="btns">
+                <button class="c-btn btn-outline" @onclick="RemoveSmallest" disabled="@(_isGenerating || _vertices.Count == 0)">ВИДАЛИТИ 10%</button>
+                <button class="c-btn btn-solid @(_isGenerating ? "processing" : "")" @onclick="GenerateRandomDiagram" disabled="@_isGenerating">
+                    @(_isGenerating ? "ОБРОБКА..." : "ЗГЕНЕРУВАТИ")
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="stage">
+        @* --- ВІЗУАЛЬНА ЗОНА --- *@
+        <section class="visual-card">
+            <div class="c-frame">
+                <div class="frame-corners top-left"></div>
+                <div class="frame-corners top-right"></div>
+                <div class="frame-corners bottom-left"></div>
+                <div class="frame-corners bottom-right"></div>
+                
+                <canvas id="voronoiCanvas"
+                        @onclick="OnCanvasClick"
+                        @oncontextmenu="OnCanvasRightClick"
+                        @oncontextmenu:preventDefault="true">
+                </canvas>
+                
+                @if (_vertices.Count == 0 && !_isGenerating)
+                {
+                    <div class="hint">
+                        <div class="hint-icon">⚠</div>
+                        ОЧІКУВАННЯ КООРДИНАТ<br /><span>[ ЛКМ: ДОДАТИ | ПКМ: ВИДАЛИТИ ]</span>
+                    </div>
+                }
+            </div>
+            <div class="c-footer">РОЗДІЛЬНА ЗДАТНІСТЬ: 500x500 <span class="divider">|</span> АКТИВНІ ВУЗЛИ: @_vertices.Count</div>
+        </section>
+
+        @* --- СТАТИСТИКА --- *@
+        <aside class="stats-card">
+            <div class="telemetry panel">
+                <div class="panel-label">ТЕЛЕМЕТРІЯ СИСТЕМИ</div>
+                <div class="stat-row">
+                    <span class="lbl">ЧАС ВИКОНАННЯ</span>
+                    <span class="val text-white">@(_lastResult?.ElapsedMilliseconds ?? 0) <small>мс</small></span>
+                </div>
+                <div class="stat-row">
+                    <span class="lbl">ВИКОРИСТАНО ОЗП</span>
+                    <span class="val text-red">@(((_lastResult?.MemoryUsed ?? 0) / 1024.0 / 1024.0).ToString("F3")) <small>МБ</small></span>
+                </div>
+                <div class="stat-row">
+                    <span class="lbl">НАВАНТАЖЕННЯ</span>
+                    <span class="val text-white">@(_useParallel ? "4 КЛАСТЕРИ" : "1 ПОТІК")</span>
+                </div>
+            </div>
+
+            <div class="loci-box panel">
+                <div class="panel-label">ДАНІ ПЛОЩИН (ТОП)</div>
+                <div class="t-wrap">
+                    <table class="r-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>КОЛІР</th>
+                                <th class="text-right">ПІКСЕЛІ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var v in _vertices)
+                            {
+                                <tr>
+                                    <td class="id-cell">#@v.Id</td>
+                                    <td>
+                                        <div class="color-indicator">
+                                            <div class="dot" style="background:@v.Color; box-shadow: 0 0 8px @v.Color;"></div>
+                                        </div>
+                                    </td>
+                                    <td class="num text-right">@v.PixelCount</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </aside>
+    </main>
 </div>
+
+@code {
+    private int _width = 500;
+    private int _height = 500;
+    private int _pointsCount = 12;
+    private MetricType _selectedMetric = MetricType.Euclidean;
+    private bool _useParallel = true;
+    private bool _isGenerating = false;
+
+    private List<VoronoiPoint> _vertices = new List<VoronoiPoint>();
+    private CalculationResult? _lastResult;
+    private Random _rng = new Random();
+
+    private async Task OnCanvasClick(MouseEventArgs e)
+    {
+        if (_isGenerating) return;
+        int nextId = 1;
+        foreach (var v in _vertices) if (v.Id >= nextId) nextId = v.Id + 1;
+        
+        _vertices.Add(new VoronoiPoint
+        {
+            Id = nextId,
+            X = (int)e.OffsetX,
+            Y = (int)e.OffsetY,
+            Color = $"#{_rng.Next(0x1000000):X6}"
+        });
+        await RunCalculation();
+    }
+
+    private async Task OnCanvasRightClick(MouseEventArgs e)
+    {
+        if (_isGenerating || _vertices.Count == 0) return;
+        VoronoiPoint? target = null;
+        double minD = double.MaxValue;
+        
+        foreach (var v in _vertices)
+        {
+            double d = Math.Sqrt(Math.Pow(e.OffsetX - v.X, 2) + Math.Pow(e.OffsetY - v.Y, 2));
+            if (d < minD) { minD = d; target = v; }
+        }
+        
+        if (target != null)
+        {
+            _vertices.Remove(target);
+            await RunCalculation();
+        }
+    }
+
+    private async Task GenerateRandomDiagram()
+    {
+        _vertices.Clear();
+        for (int i = 0; i < _pointsCount; i++)
+        {
+            _vertices.Add(new VoronoiPoint
+            {
+                Id = i + 1,
+                X = _rng.Next(0, _width),
+                Y = _rng.Next(0, _height),
+                Color = $"#{_rng.Next(0x1000000):X6}"
+            });
+        }
+        await RunCalculation();
+    }
+
+    private async Task RunCalculation()
+    {
+        if (_vertices.Count == 0)
+        {
+            _lastResult = null;
+            await DrawCanvas(new int[_width, _height]);
+            return;
+        }
+        
+        _isGenerating = true;
+        StateHasChanged();
+        await Task.Delay(30); // Пауза для анімації кнопки
+
+        GC.Collect();
+        long memBefore = GC.GetTotalMemory(true);
+        var sw = Stopwatch.StartNew();
+        
+        int[,] map = new int[_width, _height];
+
+        if (_useParallel)
+        {
+            int chunks = 4;
+            int step = _height / chunks;
+            Task<int[,]>[] tasks = new Task<int[,]>[chunks];
+
+            for (int i = 0; i < chunks; i++)
+            {
+                int start = i * step;
+                int end = (i == chunks - 1) ? _height : (i + 1) * step;
+                tasks[i] = Task.Run(() => ComputeArea(start, end));
+            }
+            
+            var results = await Task.WhenAll(tasks);
+            
+            for (int i = 0; i < chunks; i++)
+            {
+                int start = i * step;
+                int[,] region = results[i];
+                for (int y = 0; y < region.GetLength(1); y++)
+                    for (int x = 0; x < _width; x++)
+                        map[x, start + y] = region[x, y];
+            }
+        }
+        else
+        {
+            map = ComputeArea(0, _height);
+        }
+
+        sw.Stop();
+        long memAfter = GC.GetTotalMemory(false);
+
+        _lastResult = new CalculationResult
+        {
+            ElapsedMilliseconds = sw.ElapsedMilliseconds,
+            PixelMap = map,
+            MemoryUsed = Math.Max(0, memAfter - memBefore)
+        };
+        
+        UpdatePixelStats(map);
+        SortVerticesByArea(false);
+        await DrawCanvas(map);
+        
+        _isGenerating = false;
+        StateHasChanged();
+    }
+
+    private int[,] ComputeArea(int startY, int endY)
+    {
+        int h = endY - startY;
+        int[,] res = new int[_width, h];
+        for (int y = startY; y < endY; y++)
+        {
+            for (int x = 0; x < _width; x++)
+            {
+                double minD = double.MaxValue; int bestId = -1;
+                foreach (var v in _vertices)
+                {
+                    double d = 0;
+                    if (_selectedMetric == MetricType.Euclidean)
+                        d = Math.Sqrt(Math.Pow(x - v.X, 2) + Math.Pow(y - v.Y, 2));
+                    else if (_selectedMetric == MetricType.Manhattan)
+                        d = Math.Abs(x - v.X) + Math.Abs(y - v.Y);
+                    else
+                        d = Math.Max(Math.Abs(x - v.X), Math.Abs(y - v.Y));
+                        
+                    if (d < minD) { minD = d; bestId = v.Id; }
+                }
+                res[x, y - startY] = bestId;
+            }
+        }
+        return res;
+    }
+
+    private async Task DrawCanvas(int[,] map)
+    {
+        byte[] data = new byte[_width * _height * 4];
+        
+        for (int y = 0; y < _height; y++)
+        {
+            for (int x = 0; x < _width; x++)
+            {
+                int idx = (y * _width + x) * 4;
+                int id = map[x, y];
+                VoronoiPoint? p = null;
+                foreach (var v in _vertices) if (v.Id == id) { p = v; break; }
+                
+                if (p != null)
+                {
+                    string hex = p.Color.Replace("#", "");
+                    data[idx] = Convert.ToByte(hex.Substring(0, 2), 16);
+                    data[idx + 1] = Convert.ToByte(hex.Substring(2, 2), 16);
+                    data[idx + 2] = Convert.ToByte(hex.Substring(4, 2), 16);
+                    data[idx + 3] = 255;
+                }
+            }
+        }
+
+        foreach (var v in _vertices)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    int px = v.X + dx; int py = v.Y + dy;
+                    if (px >= 0 && px < _width && py >= 0 && py < _height)
+                    {
+                        int bIdx = (py * _width + px) * 4;
+                        data[bIdx] = 0; data[bIdx + 1] = 0; data[bIdx + 2] = 0; data[bIdx + 3] = 255;
+                    }
+                }
+            }
+        }
+
+        using var s = new System.IO.MemoryStream(data);
+        using var r = new DotNetStreamReference(s);
+        await JS.InvokeVoidAsync("renderVoronoi", "voronoiCanvas", _width, _height, r);
+    }
+
+    private void UpdatePixelStats(int[,] map)
+    {
+        foreach (var v in _vertices) v.PixelCount = 0;
+        for (int y = 0; y < _height; y++)
+            for (int x = 0; x < _width; x++)
+                foreach (var v in _vertices) if (v.Id == map[x, y]) { v.PixelCount++; break; }
+    }
+
+    private async Task RemoveSmallest()
+    {
+        if (_vertices.Count == 0) return;
+        int toDrop = Math.Max(1, (int)(_vertices.Count * 0.1));
+        SortVerticesByArea(true);
+        for (int i = 0; i < toDrop; i++) if (_vertices.Count > 0) _vertices.RemoveAt(0);
+        await RunCalculation();
+    }
+
+    private void SortVerticesByArea(bool ascending)
+    {
+        for (int i = 0; i < _vertices.Count - 1; i++)
+            for (int j = 0; j < _vertices.Count - i - 1; j++)
+                if (ascending ? _vertices[j].PixelCount > _vertices[j + 1].PixelCount : _vertices[j].PixelCount < _vertices[j + 1].PixelCount)
+                { var t = _vertices[j]; _vertices[j] = _vertices[j + 1]; _vertices[j + 1] = t; }
+    }
+}

@@ -33,5 +33,24 @@
 
     <!-- Скрипт Blazor -->
     <script src="_framework/blazor.webassembly.js"></script>
+
+    <!-- Скрипт для рендеру Вороного (щоб малювались площини і чорні вершини) -->
+    <script>
+        window.renderVoronoi = async function (canvasId, width, height, streamRef) {
+            let canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                console.error("Канвас не знайдено!");
+                return;
+            }
+            let ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+
+            // Читаємо масив байтів (кольори + вершини) з C# і переносимо на екран
+            let buffer = await streamRef.arrayBuffer();
+            let imgData = new ImageData(new Uint8ClampedArray(buffer), width, height);
+            ctx.putImageData(imgData, 0, 0);
+        }
+    </script>
 </body>
 </html>
