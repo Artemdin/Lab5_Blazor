@@ -78,10 +78,10 @@ namespace Lab5_Blazor
             var cpuAfter = Process.GetCurrentProcess().TotalProcessorTime;
             long memAfter = GC.GetTotalMemory(false);
 
-            result.PixelMap = map;
-            result.ElapsedMilliseconds = sw.ElapsedMilliseconds;
-            result.ProcessorTime = cpuAfter - cpuBefore;
-            result.MemoryUsed = Math.Max(0, memAfter - memBefore);
+            result.PixelMap = map; // Віддаємо готову карту пікселів
+            result.ElapsedMilliseconds = sw.ElapsedMilliseconds; // Записуємо реальний час у мс
+            result.ProcessorTime = cpuAfter - cpuBefore; // Рахуємо чисту різницю процесорного часу
+            result.MemoryUsed = Math.Max(0, memAfter - memBefore); // Рахуємо різницю пам'яті
 
             //  Підрахунок пікселів
             UpdatePixelCounts(vertices, map, width, height);
@@ -119,8 +119,8 @@ namespace Lab5_Blazor
                 for (int x = 0; x < width; x++)
                 {
                     int id = map[x, y];
-                    var vertex = vertices.FirstOrDefault(v => v.Id == id);
-                    if (vertex != null) vertex.PixelCount++;
+                    var vertex = vertices.FirstOrDefault(v => v.Id == id); /// Шукаємо цю точку в нашому списку
+                    if (vertex != null) vertex.PixelCount++; // якшо знайшли додаємо до її лічильника
                 }
             }
         }
