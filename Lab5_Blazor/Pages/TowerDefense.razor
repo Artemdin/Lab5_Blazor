@@ -183,22 +183,33 @@
 
                 @foreach (var enemy in Enemies.Where(e => !e.HasEscaped))
                 {
-                    <g class="enemy-group @(enemy.IsBoss ? "boss" : "")" transform="translate(@SvgNum(enemy.X), @SvgNum(enemy.Y))" filter="url(#orb-glitch)">
+                    <g class="enemy-group @(enemy.IsBoss ? "boss" : "")" transform="translate(@SvgNum(enemy.X), @SvgNum(enemy.Y))">
                         <ellipse class="enemy-shadow" cx="0" cy="11" rx="12" ry="4" vector-effect="non-scaling-stroke" />
                         <circle class="enemy-body" r="11" filter="url(#red-glow)" vector-effect="non-scaling-stroke" />
                         <circle class="enemy-core" r="4" vector-effect="non-scaling-stroke" />
 
                         <rect class="hp-bar-bg" x="-18" y="-30" width="36" height="5" rx="2" vector-effect="non-scaling-stroke" />
-                        <rect class="hp-bar-fill" x="-18" y="-30" width="@SvgNum((enemy.HP / (double)enemy.MaxHP) * 36)" height="5" rx="2" vector-effect="non-scaling-stroke" />
+                        <rect class="hp-bar-fill" x="-18" y="-30" width="@SvgNum((enemy.DisplayHP / enemy.MaxHP) * 36)" height="5" rx="2" vector-effect="non-scaling-stroke" />
+                        <text class="hp-value" x="0" y="-34">@GetDisplayHP(enemy)/@enemy.MaxHP</text>
 
                         <g class="hp-segments" transform="translate(-14,-23)">
                             @for (int i = 0; i < 10; i++)
                             {
-                                var isActive = enemy.HP > ((enemy.MaxHP / 10.0) * i);
+                                var isActive = enemy.DisplayHP > ((enemy.MaxHP / 10.0) * i);
                                 <rect x="@(i * 2.8)" y="0" width="2.2" height="4" class="hp-seg @(isActive ? "on" : "off")" vector-effect="non-scaling-stroke" />
                             }
                         </g>
                     </g>
+                }
+
+                @foreach (var pop in DamagePopups)
+                {
+                    <svg:text class="damage-popup"
+                              x="@SvgNum(pop.X)"
+                              y="@SvgNum(pop.Y)"
+                              style="opacity:@pop.Opacity.ToString("F2", CultureInfo.InvariantCulture);">
+                        -@pop.Amount
+                    </svg:text>
                 }
 
                 <g transform="translate(0, 330)">
@@ -328,6 +339,18 @@
         public double Opacity => MaxLife == 0 ? 0 : (double)Life / MaxLife;
     }
 
+    private class DamagePopupViewModel
+    {
+        public double X { get; set; }
+        public double Y { get; set; }
+        public int Amount { get; set; }
+        public int Life { get; set; } = 16;
+        public int MaxLife { get; set; } = 16;
+        public double Opacity => MaxLife == 0 ? 0 : (double)Life / MaxLife;
+    }
+    private List<DamagePopupViewModel> DamagePopups { get; set; } = new();
+
+
     private double CursorXPercent => Math.Clamp((CursorX / MapWidth) * 100.0, 0, 100);
     private double CursorYPercent => Math.Clamp((CursorY / MapHeight) * 100.0, 0, 100);
 
@@ -410,11 +433,11 @@
         GameManager.CurrentWave++;
         WaveMessage = $"{GameManager.CurrentWave} хвиля почалась!";
 
-        var enemiesToSpawn = 12 + (GameManager.CurrentWave * 4);
+        var enemiesToSpawn = 18 + (GameManager.CurrentWave * 6);
         var isBossWave = GameManager.CurrentWave % 10 == 0;
         if (isBossWave)
         {
-            enemiesToSpawn += 12;
+            enemiesToSpawn += 20;
             WaveMessage = $"BOSS WAVE {GameManager.CurrentWave}!";
         }
 
@@ -424,8 +447,9 @@
             {
                 X = EnemyPath[0].X,
                 Y = EnemyPath[0].Y,
-                HP = 70,
-                MaxHP = 70,
+                HP = 55,
+                MaxHP = 55,
+                DisplayHP = 55,
                 PathPointIndex = 1
             });
         }
@@ -437,8 +461,9 @@
                 X = EnemyPath[0].X,
                 Y = EnemyPath[0].Y,
                 IsBoss = true,
-                HP = 780,
-                MaxHP = 780,
+                HP = 620,
+                MaxHP = 620,
+                DisplayHP = 620,
                 PathPointIndex = 1
             });
         }
@@ -451,7 +476,9 @@
     {
         try
         {
-            while (!ct.IsCancellationRequested && Enemies.Any(e => !e.IsDead && !e.HasEscaped))
+            while (!ct.IsCancellationRequested &&
+                   (Enemies.Any(e => !e.HasEscaped && !e.IsDead) ||
+                    Enemies.Any(e => !e.HasEscaped && e.DisplayHP > 0)))
             {
                 foreach (var e in Enemies.Where(e => !e.IsDead && !e.HasEscaped))
                 {
@@ -463,6 +490,13 @@
                     shot.Life--;
                 }
                 ActiveShots.RemoveAll(s => s.Life <= 0);
+
+                foreach (var pop in DamagePopups)
+                {
+                    pop.Life--;
+                    pop.Y -= 1.2;
+                }
+                DamagePopups.RemoveAll(p => p.Life <= 0);
 
                 foreach (var tower in Towers)
                 {
@@ -477,7 +511,14 @@
                         if (CollisionHelper.IsHit(tower.X, tower.Y, enemy.X, enemy.Y, tower.Range))
                         {
                             tower.LastShotAt = DateTime.UtcNow;
-                            enemy.HP -= (int)(42 + (tower.Level * 10));
+                            var damage = (int)(65 + (tower.Level * 18));
+                            enemy.HP -= damage;
+                            DamagePopups.Add(new DamagePopupViewModel
+                            {
+                                X = enemy.X,
+                                Y = enemy.Y - 16,
+                                Amount = damage
+                            });
                             ActiveShots.Add(new ShotViewModel
                             {
                                 X1 = tower.X,
@@ -498,7 +539,12 @@
                     }
                 }
 
-                Enemies.RemoveAll(e => e.IsDead || e.HasEscaped);
+                foreach (var enemy in Enemies.Where(e => !e.HasEscaped))
+                {
+                    enemy.DisplayHP = Math.Max(enemy.HP, enemy.DisplayHP - 5);
+                }
+
+                Enemies.RemoveAll(e => e.HasEscaped || (e.IsDead && e.DisplayHP <= 0));
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(33, ct);
             }
@@ -506,6 +552,7 @@
         catch (TaskCanceledException) { }
 
         ActiveShots.Clear();
+        DamagePopups.Clear();
         IsRunning = false;
         WaveMessage = $"{GameManager.CurrentWave} хвиля завершена!";
         await InvokeAsync(StateHasChanged);
@@ -533,6 +580,7 @@
         Towers.Clear();
         Enemies.Clear();
         ActiveShots.Clear();
+        DamagePopups.Clear();
         IsRunning = false;
         KillsThisWave = 0;
         SelectedTower = null;
@@ -607,6 +655,7 @@
     }
 
     private static string SvgNum(double value) => value.ToString("F2", CultureInfo.InvariantCulture);
+    private static int GetDisplayHP(Enemy enemy) => (int)Math.Clamp(Math.Ceiling(enemy.DisplayHP), 0, enemy.MaxHP);
 
     public void Dispose() => _cts?.Cancel();
 }
