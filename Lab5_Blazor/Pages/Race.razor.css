@@ -14,7 +14,7 @@
     color: var(--text-main);
     min-height: 100vh;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    padding: 30px;
+    padding: 20px 30px;
     z-index: 1;
 }
 
@@ -36,121 +36,257 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--panel-border);
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     position: relative;
     z-index: 2;
 }
 
-.control-dashboard {
+/* ─── КАЗИНО ХЕДЕР ─── */
+.casino-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 30px;
-    margin-bottom: 25px;
-    border-top: 1px solid rgba(0, 255, 102, 0.2);
+    padding: 12px 24px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 255, 102, 0.15);
 }
 
-.balance-widget {
-    background: rgba(0, 255, 102, 0.05);
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 255, 102, 0.15);
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-.widget-label {
-    font-size: 0.75rem;
-    color: var(--neon-green);
-    letter-spacing: 2px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.money-text {
-    font-size: 2rem;
+.btn-back {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 6px 14px;
+    border-radius: 6px;
     font-weight: 800;
-    color: #fff;
-    text-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
-    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.betting-controls {
+    .btn-back:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+.back-arrow {
+    font-size: 1.1rem;
+    line-height: 0.5;
+}
+
+.header-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+}
+
+    .header-title .title-accent {
+        color: #fff;
+        text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+
+.header-stats {
     display: flex;
+    align-items: center;
     gap: 15px;
-    align-items: center;
 }
 
-.input-wrapper {
+.balance-container {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+    .balance-container .label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    .balance-container .value {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--neon-green);
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+    }
+
+.profit-indicator {
+    font-size: 0.85rem;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    padding: 2px 8px;
+    border-radius: 4px;
+    animation: fadeInProfit 0.3s ease-out;
+}
+
+    .profit-indicator.profit {
+        color: var(--neon-green);
+        background: rgba(0, 255, 102, 0.1);
+        border: 1px solid rgba(0, 255, 102, 0.2);
+    }
+
+    .profit-indicator.loss {
+        color: var(--neon-red);
+        background: rgba(255, 0, 85, 0.1);
+        border: 1px solid rgba(255, 0, 85, 0.2);
+    }
+
+@keyframes fadeInProfit {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ─── ЛЕЙАУТ: ОСНОВНИЙ КОНТЕЙНЕР ─── */
+.main-casino-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.race-content-column {
+    flex-grow: 1;
+    min-width: 0; /* Щоб flexbox не ламався від розмірів траси */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ─── САЙДБАР СТАВОК (ПРАВА КОЛОНКА) ─── */
+.sidebar-betting-column {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    color: #fff;
+}
+
+.sidebar-controls {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.control-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.input-group {
     display: flex;
     align-items: center;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    padding: 5px 15px;
-    transition: border-color 0.3s;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: border-color 0.2s;
 }
 
-    .input-wrapper:focus-within {
+    .input-group:focus-within {
         border-color: var(--neon-green);
-        box-shadow: 0 0 10px rgba(0,255,102,0.2);
     }
 
 .input-icon {
-    margin-right: 10px;
-    filter: grayscale(0.5);
+    font-size: 0.9rem;
+    margin-right: 8px;
+    filter: grayscale(0.3);
 }
 
+/* Фікс відображення Select / Option */
 .premium-input {
     background: transparent;
     border: none;
     color: #fff;
-    padding: 8px 0;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     outline: none;
     width: 100%;
 }
+
+    .premium-input option {
+        background-color: #0d121c; /* Темний фон для випадного списку */
+        color: #fff; /* Білий текст */
+        padding: 8px;
+    }
 
     .premium-input:disabled {
         color: var(--text-muted);
         cursor: not-allowed;
     }
 
-.action-buttons {
-    display: flex;
-    gap: 15px;
-}
-
-.btn-glow, .btn-solid {
-    padding: 12px 24px;
-    border-radius: 8px;
+/* Кнопки */
+.full-width-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     border: none;
-    text-transform: uppercase;
+    text-align: center;
 }
 
 .btn-glow {
     background: linear-gradient(135deg, #00ff66, #00b347);
     color: #000;
-    box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
 }
 
     .btn-glow:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 0 30px rgba(0, 255, 102, 0.6);
+        box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
     }
 
 .btn-place-bet {
     background: linear-gradient(135deg, var(--dirty-yellow), #8b6508);
     color: #fff;
-    box-shadow: 0 0 15px rgba(212, 160, 23, 0.3);
+    margin-top: 5px;
 }
 
     .btn-place-bet:hover:not(:disabled) {
-        box-shadow: 0 0 30px rgba(212, 160, 23, 0.6);
+        box-shadow: 0 0 20px rgba(212, 160, 23, 0.4);
     }
 
 .btn-solid {
@@ -161,22 +297,92 @@
 
     .btn-solid:hover:not(:disabled) {
         background: rgba(255, 0, 85, 0.2);
-        box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
     }
 
-    .btn-glow:disabled, .btn-solid:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        filter: grayscale(1);
-        transform: none;
-        box-shadow: none;
-    }
+.full-width-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
 
-/* ─── ТРАСА ─── */
+/* Список купонів у сайдбарі */
+.active-slips-container {
+    padding: 15px 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.slips-header {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.slips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.slip-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid;
+    font-size: 0.8rem;
+}
+
+.slip-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.slip-car {
+    font-weight: 700;
+    color: #fff;
+}
+
+.slip-odds {
+    font-size: 0.65rem;
+    color: var(--neon-green);
+    font-weight: 800;
+}
+
+.slip-amount {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    color: #fff;
+}
+
+.empty-slips {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.sidebar-actions {
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ─── ТРАСА (БЕЗ ЗМІН) ─── */
 .track-area {
     position: relative;
-    padding: 30px 0;
-    margin-bottom: 25px;
+    padding: 25px 0;
     background-color: #07090e;
     background-size: cover;
     background-position: center;
@@ -184,13 +390,9 @@
     box-shadow: inset 0 0 80px rgba(0, 0, 0, 1);
 }
 
-/* Швидкість */
 .speed-lines {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(255,255,255,0.03) 100px, rgba(255,255,255,0.03) 150px);
     opacity: 0;
     pointer-events: none;
@@ -213,7 +415,6 @@
     }
 }
 
-/* 🌧️ ДОЩ 🌧️ */
 .weather-rain {
     position: absolute;
     inset: 0;
@@ -234,7 +435,6 @@
     }
 }
 
-/* ❄️ СНІГ/ХУРТОВИНА ❄️ */
 .weather-snow::before, .weather-snow::after {
     content: '';
     position: absolute;
@@ -244,13 +444,13 @@
 }
 
 .weather-snow::before {
-    background: radial-gradient(3px 3px at 20px 30px, #fff, transparent), radial-gradient(4px 4px at 80px 70px, #fff, transparent), radial-gradient(3px 3px at 50px 10px, #fff, transparent);
+    background: radial-gradient(3px 3px at 20px 30px, #fff, transparent), radial-gradient(4px 4px at 80px 70px, #fff, transparent);
     background-size: 150px 150px;
     animation: fallSnow 1.5s linear infinite;
 }
 
 .weather-snow::after {
-    background: radial-gradient(2px 2px at 10px 10px, #fff, transparent), radial-gradient(3px 3px at 60px 80px, #fff, transparent);
+    background: radial-gradient(2px 2px at 10px 10px, #fff, transparent);
     background-size: 100px 100px;
     filter: blur(1px);
     animation: fallSnow 1s linear infinite;
@@ -267,7 +467,6 @@
     }
 }
 
-/* Лінії */
 .start-line {
     position: absolute;
     top: 0;
@@ -280,7 +479,7 @@
     writing-mode: vertical-rl;
     text-align: center;
     font-weight: 900;
-    font-size: 14px;
+    font-size: 12px;
     letter-spacing: 5px;
     display: flex;
     align-items: center;
@@ -294,37 +493,35 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 250px;
+    width: 200px;
     z-index: 4;
-    background: linear-gradient(to right, transparent, rgba(0, 255, 102, 0.05) 30%, rgba(0, 255, 102, 0.5) 100%);
-    border-right: 4px solid var(--neon-green);
+    background: linear-gradient(to right, transparent, rgba(0, 255, 102, 0.05) 30%, rgba(0, 255, 102, 0.4) 100%);
+    border-right: 3px solid var(--neon-green);
     writing-mode: vertical-rl;
     text-align: center;
     font-weight: 900;
-    font-size: 14px;
+    font-size: 12px;
     letter-spacing: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    text-shadow: 0 0 10px #000;
-    box-shadow: inset -20px 0 40px rgba(0,255,102,0.3);
     pointer-events: none;
     transition: opacity 0.2s linear;
 }
 
 .track-lane {
     position: relative;
-    height: 65px;
+    height: 55px;
     display: flex;
     align-items: center;
     z-index: 5;
-    border-bottom: 1px dashed rgba(255,255,255,0.05);
+    border-bottom: 1px dashed rgba(255,255,255,0.03);
 }
 
 .car-container {
     position: absolute;
-    width: 75px;
+    width: 65px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -335,16 +532,16 @@
 .car-img {
     width: 100%;
     z-index: 2;
-    filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.8));
+    filter: drop-shadow(2px 3px 3px rgba(0,0,0,0.8));
 }
 
 .car-shadow {
     position: absolute;
-    bottom: -2px;
+    bottom: -1px;
     width: 80%;
-    height: 6px;
+    height: 4px;
     border-radius: 50%;
-    filter: blur(6px);
+    filter: blur(4px);
     opacity: 0.6;
     z-index: 1;
 }
@@ -355,132 +552,14 @@
 
 .alert-badge {
     position: absolute;
-    top: -20px;
+    top: -15px;
     background: var(--neon-red);
     color: white;
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     font-weight: bold;
-    letter-spacing: 1px;
-    padding: 2px 6px;
+    padding: 1px 4px;
     border-radius: 3px;
     z-index: 6;
-    box-shadow: 0 0 10px var(--neon-red);
-}
-
-.warning-pulse {
-    animation: pulse 1s infinite;
-}
-
-/* ─── СТАТИСТИКА ─── */
-.stats-dashboard {
-    padding: 20px;
-}
-
-.premium-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 6px;
-}
-
-    .premium-table th {
-        text-align: left;
-        padding: 0 20px 10px;
-        color: var(--text-muted);
-        font-size: 0.75rem;
-        letter-spacing: 2px;
-        font-weight: 700;
-    }
-
-    .premium-table td {
-        padding: 14px 20px;
-        background: rgba(0, 0, 0, 0.4);
-        border-top: 1px solid rgba(255,255,255,0.02);
-        border-bottom: 1px solid rgba(255,255,255,0.02);
-    }
-
-        .premium-table td:first-child {
-            border-left: 1px solid rgba(255,255,255,0.02);
-            border-radius: 8px 0 0 8px;
-        }
-
-        .premium-table td:last-child {
-            border-right: 1px solid rgba(255,255,255,0.02);
-            border-radius: 0 8px 8px 0;
-        }
-
-    .premium-table tr:hover td {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-.row-success td {
-    background: linear-gradient(90deg, rgba(0, 255, 102, 0.05), rgba(0,0,0,0.4));
-    border-color: rgba(0, 255, 102, 0.1);
-}
-
-.row-danger td {
-    background: linear-gradient(90deg, rgba(255, 0, 85, 0.05), rgba(0,0,0,0.4));
-    border-color: rgba(255, 0, 85, 0.1);
-}
-
-.car-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 700;
-    font-size: 0.9rem;
-}
-
-.color-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.digital-text {
-    font-family: 'Courier New', monospace;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #fff;
-}
-
-.unit {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-.badge-success {
-    background: rgba(0, 255, 102, 0.15);
-    color: var(--neon-green);
-    border: 1px solid rgba(0, 255, 102, 0.3);
-}
-
-.badge-danger {
-    background: rgba(255, 0, 85, 0.15);
-    color: var(--neon-red);
-    border: 1px solid rgba(255, 0, 85, 0.3);
-}
-
-.badge-racing {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    animation: pulse 1.5s infinite;
-}
-
-.badge-idle {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-muted);
-    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes pulse {
@@ -497,47 +576,155 @@
     }
 }
 
-/* ─── НОВІ СТИЛІ ДЛЯ МІСЦЬ ─── */
+.warning-pulse {
+    animation: pulse 1s infinite;
+}
+
+/* ─── СТАТИСТИКА ─── */
+.stats-dashboard {
+    padding: 15px;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+}
+
+    .premium-table th {
+        text-align: left;
+        padding: 0 15px 8px;
+        color: var(--text-muted);
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        font-weight: 700;
+    }
+
+    .premium-table td {
+        padding: 10px 15px;
+        background: rgba(0, 0, 0, 0.4);
+        border-top: 1px solid rgba(255,255,255,0.01);
+        border-bottom: 1px solid rgba(255,255,255,0.01);
+        font-size: 0.85rem;
+    }
+
+        .premium-table td:first-child {
+            border-left: 1px solid rgba(255,255,255,0.01);
+            border-radius: 6px 0 0 6px;
+        }
+
+        .premium-table td:last-child {
+            border-right: 1px solid rgba(255,255,255,0.01);
+            border-radius: 0 6px 6px 0;
+        }
+
+    .premium-table tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+.row-success td {
+    background: linear-gradient(90deg, rgba(0, 255, 102, 0.05), rgba(0,0,0,0.4));
+    border-color: rgba(0, 255, 102, 0.1);
+}
+
+.row-danger td {
+    background: linear-gradient(90deg, rgba(255, 0, 85, 0.05), rgba(0,0,0,0.4));
+    border-color: rgba(255, 0, 85, 0.1);
+}
+
+.row-winner td {
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.08), rgba(0,0,0,0.4));
+    border-color: rgba(255, 215, 0, 0.15);
+}
+
+.car-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.color-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.digital-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.unit {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background: rgba(0, 255, 102, 0.1);
+    color: var(--neon-green);
+    border: 1px solid rgba(0, 255, 102, 0.2);
+}
+
+.badge-danger {
+    background: rgba(255, 0, 85, 0.1);
+    color: var(--neon-red);
+    border: 1px solid rgba(255, 0, 85, 0.2);
+}
+
+.badge-racing {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    animation: pulse 1.5s infinite;
+}
+
+.badge-idle {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .pos-cell {
-    width: 80px;
+    width: 60px;
     text-align: center;
 }
 
 .rank-badge {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 6px;
+    padding: 2px 6px;
+    border-radius: 4px;
     font-weight: 800;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
+    font-size: 0.75rem;
 }
 
 .rank-gold {
     background: linear-gradient(135deg, #ffd700, #b8860b);
     color: #000;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
 }
 
 .rank-silver {
     background: linear-gradient(135deg, #e0e0e0, #9e9e9e);
     color: #000;
-    box-shadow: 0 0 10px rgba(224, 224, 224, 0.3);
-    text-shadow: 0 1px 2px rgba(255,255,255,0.8);
 }
 
 .rank-bronze {
     background: linear-gradient(135deg, #cd7f32, #8b4513);
     color: #fff;
-    box-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
 }
 
 .rank-none {
     color: var(--text-muted);
-    background: transparent;
-}
-
-.row-winner td {
-    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), rgba(0,0,0,0.4));
-    border-color: rgba(255, 215, 0, 0.2);
 }

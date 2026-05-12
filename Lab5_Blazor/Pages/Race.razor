@@ -2,211 +2,220 @@
 @using Lab5_Blazor.Services
 @using Lab5_Blazor.Models
 @inject RaceEngine Engine
+@inject NavigationManager NavManager
 @implements IDisposable
 
-<PageTitle>Redline JDM Racing</PageTitle>
+<PageTitle>Redline JDM Casino</PageTitle>
 
 <div class="jdm-race-theme">
     <div class="scanlines"></div>
 
-    @* ─── ПАНЕЛЬ КЕРУВАННЯ ТА СТАВОК (HUD) ─── *@
-    <div class="glass-panel control-dashboard">
-        <div class="balance-widget">
-            <div class="widget-label">CURRENT BALANCE</div>
-            <div class="money-text">$@Engine.UserBalance.ToString("F0")</div>
+    @* ВЕРХНЯ ПАНЕЛЬ*@
+    <div class="casino-header glass-panel">
+        <div class="header-left">
+            <button class="btn-back" @onclick="GoHome" title="Return to Main Menu">
+                <span class="back-arrow">←</span> HOME
+            </button>
+            <div class="header-title">
+                <span class="title-accent">REDLINE</span> BOOKMAKER
+            </div>
         </div>
         
-        <div class="betting-controls">
-            <div class="input-wrapper">
-                <span class="input-icon">🌤️</span>
-                <select class="premium-input" @bind="Engine.CurrentWeather" disabled="@Engine.IsRacing">
-                    <option value="@Weather.Sunny">SUNNY (Clear / Fast)</option>
-                    <option value="@Weather.Rain">RAIN (Wet / Medium Risk)</option>
-                    <option value="@Weather.Snow">SNOW STORM (Ice / High Risk)</option>
-                </select>
+        <div class="header-stats">
+            <div class="balance-container">
+                <span class="label">BALANCE</span>
+                <span class="value">$@Engine.UserBalance.ToString("F0")</span>
             </div>
-            
-            <div class="input-wrapper">
-                <span class="input-icon">💰</span>
-                <input type="number" class="premium-input"
-                       @bind="_betAmount"
-                       min="50" step="50"
-                       disabled="@(Engine.IsRacing || _betPlaced)"
-                       placeholder="Bet $" />
-            </div>
-            
-            <div class="input-wrapper">
-                <span class="input-icon">🏎️</span>
-                <select class="premium-input" @bind="_betCarIndex" disabled="@Engine.IsRacing">
-                    @for (int i = 0; i < Engine.Participants.Count; i++)
-                    {
-                        <option value="@i">@($"{Engine.Participants[i].Name} (x{Engine.Participants[i].WinCoefficient:F2})")</option>
-                    }
-                </select>
-            </div>
-            
-            <button class="btn-glow btn-place-bet" @onclick="PlaceBet" disabled="@(Engine.IsRacing || _betPlaced)">
-                @(_betPlaced ? "✓ PLACED" : "PLACE BET")
-            </button>
-        </div>
 
-        <div class="action-buttons">
-            <button class="btn-solid btn-reset" @onclick="ResetRace" disabled="@Engine.IsRacing">RESET</button>
-            <button class="btn-glow btn-start" @onclick="StartRace" disabled="@Engine.IsRacing">START RACE</button>
+            @if (_showResults && _lastProfit != 0)
+            {
+                <div class="profit-indicator @(_lastProfit > 0 ? "profit" : "loss")">
+                    @(_lastProfit > 0 ? "+" : "")$@_lastProfit.ToString("F0")
+                </div>
+            }
         </div>
     </div>
 
-    @* ─── ТРАСА ─── *@
-    <div class="track-area glass-panel" style="background-image: url('images/track_bg.png');">
+    @* ОСНОВНИЙ КОНТЕЙНЕР (ТРАСА ЗЛІВА, СТАВКИ СПРАВА)  *@
+    <div class="main-casino-layout">
         
-        @* Погодні ефекти *@
-        @if (Engine.CurrentWeather == Weather.Rain)
-        {
-            <div class="weather-rain"></div>
-        }
-        else if (Engine.CurrentWeather == Weather.Snow)
-        {
-            <div class="weather-snow"></div>
-        }
-
-        <div class="speed-lines @(Engine.IsRacing ? "active" : "")"></div>
-
-        @{
-            var leaderPos = Engine.Participants.Any() ? Engine.Participants.Max(v => v.Position) : 0;
-            var leaderPct = Math.Min(100.0, (leaderPos / _trackLen) * 100.0);
+        <div class="race-content-column">
             
-            var startOpacity = Math.Max(0, 1.0 - (leaderPct / 10.0));
-            var startOffset = -(leaderPct * 5);
-            
-            var finishOpacity = leaderPct < 80 ? 0 : Math.Min(1.0, (leaderPct - 80) / 20.0);
-            var finishOffset = Math.Max(0, (100 - leaderPct) * 3);
-        }
+            @* ТРАСА *@
+            <div class="track-area glass-panel" style="background-image: url('images/track_bg.png');">
+                @if (Engine.CurrentWeather == Weather.Rain)
+                {
+                    <div class="weather-rain"></div>
+                }
+                else if (Engine.CurrentWeather == Weather.Snow)
+                {
 
-        <div class="start-line"
-             style="opacity: @(startOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-            transform: translateX(@(startOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">
-            START
+                    <div class="weather-snow"></div>
+                }
+
+                <div class="speed-lines @(Engine.IsRacing ? "active" : "")"></div>
+
+                @{
+                    var leaderPos = Engine.Participants.Any() ? Engine.Participants.Max(v => v.Position) : 0;
+                    var leaderPct = Math.Min(100.0, (leaderPos / _trackLen) * 100.0);
+                    var startOpacity = Math.Max(0, 1.0 - (leaderPct / 10.0));
+                    var startOffset = -(leaderPct * 5);
+                    var finishOpacity = leaderPct < 80 ? 0 : Math.Min(1.0, (leaderPct - 80) / 20.0);
+                    var finishOffset = Math.Max(0, (100 - leaderPct) * 3);
+                }
+
+                <div class="start-line" style="opacity: @startOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture); transform: translateX(@(startOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">START</div>
+                <div class="finish-zone" style="opacity: @finishOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture); transform: translateX(@(finishOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">FINISH</div>
+
+                @for (int i = 0; i < Engine.Participants.Count; i++)
+                {
+                    var v = Engine.Participants[i];
+                    var pct = Math.Min(100.0, (v.Position / _trackLen) * 100.0);
+                    <div class="track-lane">
+                        <div class="car-container" style="left: @(pct.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%; transform: translateX(-@(pct.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%);">
+                            @if (v.IsBroken)
+                            {
+                                <div class="alert-badge warning-pulse">FAIL</div>
+                            }
+                            <img src="images/cars/car@(i + 1).png" class="car-img @(v.IsBroken ? "broken-fx" : "")" />
+                            <div class="car-shadow" style="background: @v.Color;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* СТАТИСТИКА*@
+            <div class="glass-panel stats-dashboard">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>CAR MODEL</th>
+                            <th>SPEED</th>
+                            <th>STATUS</th>
+                            <th>TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var rankedParticipants = Engine.Participants
+                                .OrderByDescending(v => v.Position >= _trackLen && !v.IsBroken)
+                                .ThenBy(v => v.Position >= _trackLen && !v.IsBroken ? v.RaceTime : TimeSpan.MaxValue)
+                                .ThenByDescending(v => v.Position)
+                                .ToList();
+                        }
+                        @for (int i = 0; i < rankedParticipants.Count; i++)
+                        {
+                            var v = rankedParticipants[i];
+                            var isFinished = v.Position >= _trackLen && !v.IsBroken;
+                            var liveSpeed = (Engine.IsRacing && !v.IsBroken && !isFinished) ? Math.Round(v.Speed * v.Acceleration * 6) : 0;
+                            string positionBadge = isFinished ? (i == 0 ? "🏆 1ST" : i == 1 ? "🥈 2ND" : i == 2 ? "🥉 3RD" : $"{i + 1}th") : "-";
+
+                            <tr class="@(isFinished && i == 0 ? "row-winner" : isFinished ? "row-success" : v.IsBroken ? "row-danger" : "")">
+                                <td class="pos-cell">
+                                    <span class="rank-badge @(i == 0 ? "rank-gold" : i == 1 ? "rank-silver" : i == 2 ? "rank-bronze" : "rank-none")">@positionBadge</span>
+                                </td>
+                                <td><div class="car-name-cell"><span class="color-dot" style="background: @v.Color;"></span>@v.Name</div></td>
+                                <td class="digital-text">@liveSpeed <span class="unit">km/h</span></td>
+                                <td><span class="status-badge @(isFinished ? "badge-success" : v.IsBroken ? "badge-danger" : Engine.IsRacing ? "badge-racing" : "badge-idle")">@(isFinished ? "FINISHED" : v.IsBroken ? "BROKEN" : Engine.IsRacing ? "RACING..." : "READY")</span></td>
+                                <td class="digital-text">@(v.RaceTime.TotalSeconds > 0 ? v.RaceTime.ToString(@"mm\:ss\.fff") : "--:--.---")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-        
-        <div class="finish-zone"
-             style="opacity: @(finishOpacity.ToString("F2", System.Globalization.CultureInfo.InvariantCulture));
-            transform: translateX(@(finishOffset.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))px);">
-            FINISH
-        </div>
 
-        @for (int i = 0; i < Engine.Participants.Count; i++)
-        {
-            var v = Engine.Participants[i];
-            var pct = Math.Min(100.0, (v.Position / _trackLen) * 100.0);
-            
-            <div class="track-lane">
-                <div class="car-container"
-                     style="left: @(pct.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;
-                    transform: translateX(-@(pct.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%);">
-                    
-                    @if (v.IsBroken)
+        @* ПАНЕЛЬ СТАВОК *@
+        <div class="sidebar-betting-column glass-panel">
+            <div class="sidebar-header">
+                BETTING SLIP
+            </div>
+
+            <div class="sidebar-controls">
+                <div class="control-block">
+                    <label class="control-label">WEATHER CONDITION</label>
+                    <div class="input-group">
+                        <span class="input-icon">🌤️</span>
+                        <select class="premium-input select-fixed" @bind="Engine.CurrentWeather" disabled="@Engine.IsRacing">
+                            <option value="@Weather.Sunny">SUNNY (Fast)</option>
+                            <option value="@Weather.Rain">RAIN (Medium)</option>
+                            <option value="@Weather.Snow">SNOW (High Risk)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-block">
+                    <label class="control-label">SELECT VEHICLE</label>
+                    <div class="input-group">
+                        <span class="input-icon">🏎️</span>
+                        <select class="premium-input select-fixed" @bind="_selectedCarIndex" disabled="@Engine.IsRacing">
+                            @for (int i = 0; i < Engine.Participants.Count; i++)
+                            {
+                                <option value="@i">@($"{Engine.Participants[i].Name} (x{Engine.Participants[i].WinCoefficient:F2})")</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="control-block">
+                    <label class="control-label">STAKE AMOUNT ($)</label>
+                    <div class="input-group">
+                        <span class="input-icon">💰</span>
+                        <input type="number" class="premium-input input-fixed"
+                               @bind="_betAmount"
+                               min="10" step="50"
+                               disabled="@Engine.IsRacing"
+                               placeholder="Amount" />
+                    </div>
+                </div>
+
+                <button class="btn-glow full-width-btn btn-place-bet" @onclick="AddBet" disabled="@(Engine.IsRacing || Engine.UserBalance < _betAmount)">
+                    ADD TO SLIP
+                </button>
+            </div>
+
+            @* Фішки активних ставок у сайдбарі *@
+            <div class="active-slips-container">
+                <div class="slips-header">ACTIVE BETS (@_activeBets.Count)</div>
+                <div class="slips-list">
+                    @if (_activeBets.Any())
                     {
-                        <div class="alert-badge warning-pulse">FAILURE</div>
+                        @foreach (var bet in _activeBets)
+                        {
+                            <div class="slip-item" style="border-left-color: @Engine.Participants[bet.Key].Color">
+                                <div class="slip-info">
+                                    <span class="slip-car">@Engine.Participants[bet.Key].Name</span>
+                                    <span class="slip-odds">x@(Engine.Participants[bet.Key].WinCoefficient.ToString("F2"))</span>
+                                </div>
+                                <div class="slip-amount">$@bet.Value</div>
+                            </div>
+                        }
                     }
-                    <img src="images/cars/car@(i + 1).png" class="car-img @(v.IsBroken ? "broken-fx" : "")" />
-                    
-                    <div class="car-shadow" style="background: @v.Color;"></div>
+                    else
+                    {
+                        <div class="empty-slips">No active bets placed</div>
+                    }
                 </div>
             </div>
-        }
-    </div>
 
-    @* ─── СТАТИСТИКА ─── *@
-    <div class="glass-panel stats-dashboard">
-        <table class="premium-table">
-            <thead>
-                <tr>
-                    <th>POS</th>
-                    <th>CAR MODEL</th>
-                    <th>SPEED</th>
-                    <th>STATUS</th>
-                    <th>TIME</th>
-                </tr>
-            </thead>
-            <tbody>
-                @{
-                    var rankedParticipants = Engine.Participants
-                        .OrderByDescending(v => v.Position >= _trackLen && !v.IsBroken)
-                        .ThenBy(v => v.Position >= _trackLen && !v.IsBroken ? v.RaceTime : TimeSpan.MaxValue)
-                        .ThenByDescending(v => v.Position)
-                        .ToList();
-                }
-                
-                @for (int i = 0; i < rankedParticipants.Count; i++)
-                {
-                    var v = rankedParticipants[i];
-                    var isFinished = v.Position >= _trackLen && !v.IsBroken;
-                    var liveSpeed = (Engine.IsRacing && !v.IsBroken && !isFinished)
-                                    ? Math.Round(v.Speed * v.Acceleration * 6) : 0;
-                    
-                    string positionBadge = "-";
-                    if (isFinished)
-                    {
-                        if (i == 0) positionBadge = "🏆 1ST";
-                        else if (i == 1) positionBadge = "🥈 2ND";
-                        else if (i == 2) positionBadge = "🥉 3RD";
-                        else positionBadge = $"{i + 1}th";
-                    }
+            <div class="sidebar-actions">
+                <button class="btn-solid full-width-btn btn-reset" @onclick="ResetRace" disabled="@Engine.IsRacing">RESET</button>
+                <button class="btn-glow full-width-btn btn-start" @onclick="StartRace" disabled="@(Engine.IsRacing || !_activeBets.Any())">START RACE</button>
+            </div>
+        </div>
 
-                    <tr class="@(isFinished && i == 0 ? "row-winner" : isFinished ? "row-success" : v.IsBroken ? "row-danger" : "")">
-                        <td class="pos-cell">
-                            @if (positionBadge != "-")
-                            {
-                                <span class="rank-badge @(i == 0 ? "rank-gold" : i == 1 ? "rank-silver" : i == 2 ? "rank-bronze" : "")">
-                                    @positionBadge
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="rank-badge rank-none">-</span>
-                            }
-                        </td>
-                        <td>
-                            <div class="car-name-cell">
-                                <span class="color-dot" style="background: @v.Color; box-shadow: 0 0 8px @v.Color;"></span>
-                                @v.Name
-                            </div>
-                        </td>
-                        <td class="digital-text">@liveSpeed <span class="unit">km/h</span></td>
-                        <td>
-                            @if (isFinished)
-                            {
-                                <span class="status-badge badge-success">FINISHED</span>
-                            }
-                            else if (v.IsBroken)
-                            {
-
-                                <span class="status-badge badge-danger">BROKEN</span>
-                            }
-                            else if (Engine.IsRacing)
-                            {
-
-                                <span class="status-badge badge-racing">RACING...</span>
-                            }
-                            else
-                            {
-
-                                <span class="status-badge badge-idle">READY</span>
-                            }
-                        </td>
-                        <td class="digital-text">@(v.RaceTime.TotalSeconds > 0 ? v.RaceTime.ToString(@"mm\:ss\.fff") : "--:--.---")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
     </div>
 </div>
 
 @code {
     private const double _trackLen = 1000;
     private int _betAmount = 100;
-    private int _betCarIndex = 0;
-    private bool _betPlaced = false;
+    private int _selectedCarIndex = 0;
+    private Dictionary<int, int> _activeBets = new();
+    private bool _showResults = false;
+    private decimal _lastProfit = 0;
 
     private static readonly string[] _carNames = { "Toyota Supra MK4", "BMW M3 E46", "Audi R8", "Mazda RX-7 FD", "Nissan Skyline R34" };
     private static readonly string[] _carColors = { "#ff003c", "#0088ff", "#ffffff", "#ffaa00", "#00ff66" };
@@ -222,59 +231,61 @@
         }
     }
 
+    private void GoHome()
+    {
+        NavManager.NavigateTo("/");
+    }
+
+    private void AddBet()
+    {
+        if (Engine.IsRacing || Engine.UserBalance < _betAmount) return;
+
+        if (_activeBets.ContainsKey(_selectedCarIndex))
+            _activeBets[_selectedCarIndex] += _betAmount;
+        else
+            _activeBets.Add(_selectedCarIndex, _betAmount);
+
+        Engine.UserBalance -= _betAmount;
+        _showResults = false;
+    }
+
     private async Task StartRace()
     {
-        if (Engine.IsRacing) return;
+        if (Engine.IsRacing || !_activeBets.Any()) return;
+
+        _showResults = false;
+        decimal totalStaked = _activeBets.Sum(b => b.Value);
         
         await Engine.StartRace(_trackLen);
 
-        if (_betPlaced)
+        var winner = Engine.Participants
+            .Where(v => v.Position >= _trackLen && !v.IsBroken)
+            .OrderBy(v => v.RaceTime)
+            .FirstOrDefault();
+
+        decimal totalWon = 0;
+        if (winner != null)
         {
-            var betCar = Engine.Participants[_betCarIndex];
-            
-            var realWinner = Engine.Participants
-                .Where(v => v.Position >= _trackLen && !v.IsBroken)
-                .OrderBy(v => v.RaceTime)
-                .FirstOrDefault();
-
-            var tjomchikWinner = Engine.Participants
-                .OrderByDescending(v => v.Position)
-                .FirstOrDefault();
-
-            //  Корегуємо баланс
-            if (realWinner == betCar && tjomchikWinner != betCar)
+            int winnerIdx = Engine.Participants.IndexOf(winner);
+            if (_activeBets.TryGetValue(winnerIdx, out int winBet))
             {
-                Engine.UserBalance += (decimal)_betAmount * (decimal)betCar.WinCoefficient;
-            }
-            else if (realWinner != betCar && tjomchikWinner == betCar)
-            {
-                Engine.UserBalance -= (decimal)_betAmount * (decimal)betCar.WinCoefficient;
+                totalWon = (decimal)winBet * (decimal)winner.WinCoefficient;
+                Engine.UserBalance += totalWon;
             }
         }
 
-        _betPlaced = false;
-    }
-
-    private void PlaceBet()
-    {
-        if (_betPlaced || Engine.Participants.Count == 0) return;
-        var car = Engine.Participants[_betCarIndex];
-        Engine.PlaceBet(car, (decimal)_betAmount);
-        _betPlaced = true;
+        _lastProfit = totalWon - totalStaked;
+        _activeBets.Clear();
+        _showResults = true;
     }
 
     private void ResetRace()
     {
         if (Engine.IsRacing) return;
         Engine.ResetRace();
-        
-        // Оновлюємо статки для кожної гонки
-        foreach (var car in Engine.Participants)
-        {
-            car.GenerateNewStats();
-        }
-        
-        _betPlaced = false;
+        _activeBets.Clear();
+        _showResults = false;
+        foreach (var car in Engine.Participants) car.GenerateNewStats();
     }
 
     private void Refresh() => InvokeAsync(StateHasChanged);
