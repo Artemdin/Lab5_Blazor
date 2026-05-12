@@ -1,10 +1,15 @@
-﻿namespace Lab5_Blazor.GameLogic
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Lab5_Blazor.GameLogic
 {
     public class Enemy
     {
         public Guid Id { get; } = Guid.NewGuid();
         public double X { get; set; }
         public double Y { get; set; }
+        public double Angle { get; set; } // Поворот машинки в градусах
         public int HP { get; set; } = 100;
         public int MaxHP { get; set; } = 100;
         public double DisplayHP { get; set; } = 100;
