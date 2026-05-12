@@ -28,7 +28,11 @@
             
             <div class="input-wrapper">
                 <span class="input-icon">💰</span>
-                <input type="number" class="premium-input" @bind="_betAmount" min="50" step="50" disabled="@Engine.IsRacing" placeholder="Bet $" />
+                <input type="number" class="premium-input"
+                       @bind="_betAmount"
+                       min="50" step="50"
+                       disabled="@(Engine.IsRacing || _betPlaced)"
+                       placeholder="Bet $" />
             </div>
             
             <div class="input-wrapper">
@@ -228,26 +232,22 @@
         {
             var betCar = Engine.Participants[_betCarIndex];
             
-            // 1. Шукаємо справжнього переможця (доїхав + найкращий час)
             var realWinner = Engine.Participants
                 .Where(v => v.Position >= _trackLen && !v.IsBroken)
                 .OrderBy(v => v.RaceTime)
                 .FirstOrDefault();
 
-            // 2. Дивимось, кому бекенд Тьомчика віддав перемогу (залетів найдалі)
             var tjomchikWinner = Engine.Participants
                 .OrderByDescending(v => v.Position)
                 .FirstOrDefault();
 
-            // 3. Корегуємо баланс
+            //  Корегуємо баланс
             if (realWinner == betCar && tjomchikWinner != betCar)
             {
-                // Ми виграли, але бекенд не дав грошей -> додаємо самі
                 Engine.UserBalance += (decimal)_betAmount * (decimal)betCar.WinCoefficient;
             }
             else if (realWinner != betCar && tjomchikWinner == betCar)
             {
-                // Ми програли, але бекенд помилково дав гроші -> забираємо
                 Engine.UserBalance -= (decimal)_betAmount * (decimal)betCar.WinCoefficient;
             }
         }
