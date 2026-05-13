@@ -1,4 +1,4 @@
-﻿@page "/tower-defense"
+@page "/tower-defense"
 @using Lab5_Blazor.GameLogic
 @using System.Globalization
 @inject NavigationManager Navigation
@@ -27,7 +27,7 @@
         </div>
 
         <div class="hud-controls">
-            <button class="ctrl-btn action-btn @(IsRunning ? "danger" : "ready")" @onclick="StartWave">
+            <button class="ctrl-btn action-btn @(IsRunning ? "danger" : "ready")" @onclick="StartWave" disabled="@IsGameOver">
                 @(IsRunning ? "🛑 ЗУПИНИТИ" : "🚀 ПУСК ХВИЛІ")
             </button>
             <button class="ctrl-btn reset-btn" @onclick="ResetGame">🔄 СКИНУТИ</button>
@@ -127,6 +127,15 @@
                     <div class="cursor-ring"></div>
                 </div>
             }
+
+            @if (IsGameOver)
+            {
+                <div class="game-over-overlay">
+                    <h2>ПРОГРАШ</h2>
+                    <p>Машинка прорвала оборону!</p>
+                    <button class="ctrl-btn reset-btn" style="font-size: 1.1rem; padding: 12px 24px;" @onclick="ResetGame">🔄 СПРОБУВАТИ ЗНОВУ</button>
+                </div>
+            }
         </section>
 
         <aside class="sys-panel">
@@ -174,6 +183,7 @@
 
     private TowerViewModel? SelectedTower;
     private bool IsRunning = false;
+    private bool IsGameOver = false;
     private bool PlacingTower = false;
     private double CursorX = 450;
     private double CursorY = 280;
@@ -276,12 +286,15 @@
 
     private void TogglePlacement()
     {
+        if (IsGameOver) return;
         PlacingTower = !PlacingTower;
         WaveMessage = PlacingTower ? "📍 Оберіть локацію для розміщення посту." : "Побудову скасовано.";
     }
 
     private async void StartWave()
     {
+        if (IsGameOver) return;
+
         if (IsRunning)
         {
             _cts?.Cancel();
@@ -342,6 +355,14 @@
                 foreach (var e in Enemies.Where(e => !e.IsDead && !e.HasEscaped))
                 {
                     MoveEnemyAlongPath(e);
+                    if (e.HasEscaped)
+                    {
+                        IsGameOver = true;
+                        PlacingTower = false;
+                        WaveMessage = "💥 ПРОГРАШ! Машинка прорвала оборону!";
+                        _cts?.Cancel();
+                        break;
+                    }
                 }
 
                 foreach (var shot in ActiveShots) { shot.Life--; }
@@ -406,7 +427,11 @@
         ActiveShots.Clear();
         DamagePopups.Clear();
         IsRunning = false;
-        WaveMessage = $"🏁 Раунд {GameManager.CurrentWave} завершено!";
+        
+        if (!IsGameOver)
+        {
+            WaveMessage = $"🏁 Раунд {GameManager.CurrentWave} завершено!";
+        }
         await InvokeAsync(StateHasChanged);
     }
 
@@ -432,6 +457,7 @@
         ActiveShots.Clear();
         DamagePopups.Clear();
         IsRunning = false;
+        IsGameOver = false;
         SelectedTower = null;
         WaveMessage = "🔄 Систему перезапущено. Готово до старту.";
     }
